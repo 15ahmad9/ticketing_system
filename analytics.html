@@ -1,0 +1,259 @@
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Analytics — LTUC IT Ticketing</title>
+  <link rel="stylesheet" href="/css/style.css" />
+  <script src="/js/chart.min.js"></script>
+</head>
+<body class="dashboard">
+
+  <!-- ── Navbar ─────────────────────────────────────────────── -->
+  <nav class="navbar">
+    <div>
+      <img src="/images/ltuc-logo.jpg" alt="LTUC" class="ltuc-logo">
+      <span class="navbar-brand">LTUC IT Ticketing System</span>
+      <span class="navbar-sub">Analytics &amp; Reports</span>
+    </div>
+    <div class="navbar-right">
+      <a href="/it/dashboard.html" class="nav-link">&#8592; Back to Dashboard</a>
+      <span class="navbar-user" id="navUser"></span>
+      <button class="btn-logout" id="logoutBtn">Sign Out</button>
+    </div>
+  </nav>
+
+  <!-- ── Main Content ───────────────────────────────────────── -->
+  <main class="main-content">
+
+    <div class="analytics-header">
+      <div>
+        <h2>Analytics &amp; Reports</h2>
+        <span class="last-updated" id="lastUpdated"></span>
+      </div>
+      <div style="display:flex;gap:10px;">
+        <button class="btn-primary" id="refreshBtn">&#8634; Refresh</button>
+        <button class="btn-primary" id="exportBtn">&#8595; Export to CSV</button>
+      </div>
+    </div>
+
+    <!-- KPI Cards -->
+    <div class="kpi-cards" id="kpiCards">
+      <div class="kpi-card"><div class="kpi-number" id="kpiTotal">—</div><div class="kpi-label">Total Tickets</div></div>
+      <div class="kpi-card"><div class="kpi-number" id="kpiOpen">—</div><div class="kpi-label">Open Tickets</div></div>
+      <div class="kpi-card"><div class="kpi-number" id="kpiResolution">—</div><div class="kpi-label">Avg Resolution (days)</div></div>
+      <div class="kpi-card"><div class="kpi-number" id="kpiPositive">—</div><div class="kpi-label">Positive Feedback</div></div>
+    </div>
+
+    <!-- 4-chart grid -->
+    <div class="charts-grid">
+      <div class="chart-card">
+        <h3>Tickets by Status</h3>
+        <canvas id="statusChart"></canvas>
+      </div>
+      <div class="chart-card">
+        <h3>Tickets by Category</h3>
+        <canvas id="categoryChart"></canvas>
+      </div>
+      <div class="chart-card">
+        <h3>Tickets by Priority</h3>
+        <canvas id="priorityChart"></canvas>
+      </div>
+      <div class="chart-card">
+        <h3>Feedback Summary</h3>
+        <canvas id="feedbackChart"></canvas>
+      </div>
+    </div>
+
+    <!-- Monthly trend -->
+    <div class="monthly-chart">
+      <h3>Ticket Trend (Last 6 Months)</h3>
+      <canvas id="monthlyChart"></canvas>
+    </div>
+
+  </main>
+
+  <script>
+  (function () {
+    'use strict';
+
+    // Chart instances (destroyed before re-creation)
+    const charts = {};
+
+    function escHtml(str) {
+      return String(str)
+        .replace(/&/g,'&amp;').replace(/</g,'&lt;')
+        .replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+    }
+
+    // ── Auth check ────────────────────────────────────────────
+    async function init() {
+      try {
+        const r = await fetch('/api/auth/me', { credentials: 'include' });
+        if (!r.ok) { window.location.href = '/index.html'; return; }
+        const { user } = await r.json();
+        if (user.role === 'staff') { window.location.href = '/staff/dashboard.html'; return; }
+        document.getElementById('navUser').textContent =
+          user.full_name + (user.role === 'admin' ? ' (Admin)' : ' (IT)');
+      } catch (e) {
+        window.location.href = '/index.html';
+        return;
+      }
+      loadAnalytics();
+    }
+
+    // ── Load analytics data ───────────────────────────────────
+    async function loadAnalytics() {
+      try {
+        const r = await fetch('/api/admin/analytics', { credentials: 'include' });
+        if (!r.ok) { console.error('Failed to load analytics'); return; }
+        const data = await r.json();
+        renderKPIs(data);
+        renderStatusChart(data.byStatus);
+        renderCategoryChart(data.byCategory);
+        renderPriorityChart(data.byPriority);
+        renderFeedbackChart(data.feedbackStats);
+        renderMonthlyChart(data.byMonth);
+        document.getElementById('lastUpdated').textContent =
+          'Last updated: ' + new Date().toLocaleTimeString('en-GB');
+      } catch (e) {
+        console.error('Analytics error:', e);
+      }
+    }
+
+    // ── KPI Cards ─────────────────────────────────────────────
+    function renderKPIs(data) {
+      const total = Object.values(data.byStatus).reduce((a, b) => a + b, 0);
+      document.getElementById('kpiTotal').textContent = total;
+      document.getElementById('kpiOpen').textContent = data.byStatus.Open || 0;
+      document.getElementById('kpiResolution').textContent = data.avgResolutionDays + ' days';
+      const pos = data.feedbackStats.positive;
+      const neg = data.feedbackStats.negative;
+      const pct = (pos + neg) > 0 ? Math.round(pos / (pos + neg) * 100) : 0;
+      document.getElementById('kpiPositive').textContent = pct + '%';
+    }
+
+    // ── Chart helpers ─────────────────────────────────────────
+    function destroyChart(id) {
+      if (charts[id]) { charts[id].destroy(); delete charts[id]; }
+    }
+
+    function renderStatusChart(byStatus) {
+      destroyChart('status');
+      charts['status'] = new Chart(document.getElementById('statusChart'), {
+        type: 'doughnut',
+        data: {
+          labels: ['Open', 'In Progress', 'Resolved', 'Closed'],
+          datasets: [{
+            data: [byStatus.Open, byStatus['In Progress'], byStatus.Resolved, byStatus.Closed],
+            backgroundColor: ['#2e6da4', '#e67e22', '#27ae60', '#7f8c8d']
+          }]
+        },
+        options: { plugins: { legend: { position: 'bottom' } } }
+      });
+    }
+
+    function renderCategoryChart(byCategory) {
+      destroyChart('category');
+      const labels = Object.keys(byCategory);
+      const values = Object.values(byCategory);
+      charts['category'] = new Chart(document.getElementById('categoryChart'), {
+        type: 'bar',
+        data: {
+          labels,
+          datasets: [{
+            label: 'Tickets',
+            data: values,
+            backgroundColor: '#1a3a5c'
+          }]
+        },
+        options: {
+          indexAxis: 'y',
+          plugins: { legend: { display: false } },
+          scales: { x: { beginAtZero: true, ticks: { stepSize: 1 } } }
+        }
+      });
+    }
+
+    function renderPriorityChart(byPriority) {
+      destroyChart('priority');
+      charts['priority'] = new Chart(document.getElementById('priorityChart'), {
+        type: 'bar',
+        data: {
+          labels: ['Low', 'Medium', 'High', 'Critical'],
+          datasets: [{
+            label: 'Tickets',
+            data: [byPriority.Low, byPriority.Medium, byPriority.High, byPriority.Critical],
+            backgroundColor: ['#7f8c8d', '#2e6da4', '#e67e22', '#c0392b']
+          }]
+        },
+        options: {
+          plugins: { legend: { display: false } },
+          scales: { y: { beginAtZero: true, ticks: { stepSize: 1 } } }
+        }
+      });
+    }
+
+    function renderFeedbackChart(feedbackStats) {
+      destroyChart('feedback');
+      charts['feedback'] = new Chart(document.getElementById('feedbackChart'), {
+        type: 'doughnut',
+        data: {
+          labels: ['Positive', 'Negative', 'No Feedback'],
+          datasets: [{
+            data: [feedbackStats.positive, feedbackStats.negative, feedbackStats.none],
+            backgroundColor: ['#27ae60', '#c0392b', '#bdc3c7']
+          }]
+        },
+        options: { plugins: { legend: { position: 'bottom' } } }
+      });
+    }
+
+    function renderMonthlyChart(byMonth) {
+      destroyChart('monthly');
+      charts['monthly'] = new Chart(document.getElementById('monthlyChart'), {
+        type: 'line',
+        data: {
+          labels: byMonth.map(m => m.month),
+          datasets: [{
+            label: 'Tickets',
+            data: byMonth.map(m => m.count),
+            borderColor: '#1a3a5c',
+            backgroundColor: 'rgba(26,58,92,0.1)',
+            fill: true,
+            tension: 0.3
+          }]
+        },
+        options: {
+          plugins: { legend: { display: false } },
+          scales: { y: { beginAtZero: true, ticks: { stepSize: 1 } } }
+        }
+      });
+    }
+
+    // ── Buttons ───────────────────────────────────────────────
+    document.getElementById('refreshBtn').addEventListener('click', loadAnalytics);
+    document.getElementById('exportBtn').addEventListener('click', () => {
+      window.location.href = '/api/admin/export/tickets';
+    });
+    document.getElementById('logoutBtn').addEventListener('click', () => {
+      fetch('/api/auth/logout', { method: 'POST', credentials: 'include' })
+        .finally(() => { window.location.href = '/index.html'; });
+    });
+
+    init();
+  })();
+  </script>
+
+  <footer class="site-footer">
+    <div class="footer-content">
+      <span>LTUC IT Department</span>
+      <span class="footer-divider">|</span>
+      <span>LTUC IT Ticketing System <strong>v1.5.4</strong></span>
+      <span class="footer-divider">|</span>
+      <span>© 2026 Luminus Technical University College</span>
+    </div>
+  </footer>
+</body>
+</html>

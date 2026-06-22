@@ -1,0 +1,137 @@
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Administrator Access — LTUC IT Ticketing</title>
+  <link rel="stylesheet" href="/css/style.css" />
+</head>
+<body style="min-height:100vh;background:#1a3a5c;">
+  <div class="login-wrapper" style="min-height:calc(100vh - 51px);display:flex;align-items:center;justify-content:center;padding-bottom:60px;">
+    <div class="card">
+
+      <img src="/images/ltuc-logo.jpg" alt="LTUC" class="ltuc-logo">
+
+      <div class="card-header">
+        <h1 class="system-title">Administrator Access</h1>
+        <p class="system-subtitle">IT Staff &amp; Administrators only</p>
+      </div>
+
+      <div id="errorMessage" class="error-message" role="alert" aria-live="polite"></div>
+
+      <form id="loginForm" class="login-form" novalidate>
+        <div class="form-group">
+          <label for="email">Email Address</label>
+          <input
+            type="email"
+            id="email"
+            name="email"
+            placeholder="you@ltuc.com"
+            autocomplete="email"
+            required
+          />
+        </div>
+
+        <div class="form-group">
+          <label for="password">Password</label>
+          <input
+            type="password"
+            id="password"
+            name="password"
+            placeholder="Enter your password"
+            autocomplete="current-password"
+            required
+          />
+        </div>
+
+        <button type="submit" id="submitBtn" class="btn-login">
+          <span id="btnText">Sign In</span>
+          <span id="btnSpinner" class="spinner hidden" aria-hidden="true"></span>
+        </button>
+      </form>
+
+      <p style="margin-top:20px;font-size:0.85rem;">
+        <a href="/index.html" style="color:#2e6da4;text-decoration:none;">&larr; Back to main login</a>
+      </p>
+      <p class="footer-note">Internal use only &mdash; LTUC Intranet</p>
+    </div>
+  </div>
+
+  <footer class="site-footer" style="color:rgba(255,255,255,0.6);">
+    <div class="footer-content">
+      <span>LTUC IT Department</span>
+      <span class="footer-divider">|</span>
+      <span>LTUC IT Ticketing System <strong>v1.5.4</strong></span>
+      <span class="footer-divider">|</span>
+      <span>© 2026 Luminus Technical University College</span>
+    </div>
+  </footer>
+
+  <script>
+  (function () {
+    'use strict';
+
+    const form = document.getElementById('loginForm');
+    const errEl = document.getElementById('errorMessage');
+    const submitBtn = document.getElementById('submitBtn');
+    const btnText = document.getElementById('btnText');
+    const btnSpinner = document.getElementById('btnSpinner');
+
+    function showError(msg) {
+      errEl.textContent = msg;
+      errEl.style.display = 'block';
+    }
+
+    function setLoading(loading) {
+      submitBtn.disabled = loading;
+      btnText.textContent = loading ? 'Signing in…' : 'Sign In';
+      btnSpinner.classList.toggle('hidden', !loading);
+    }
+
+    form.addEventListener('submit', async (e) => {
+      e.preventDefault();
+      errEl.style.display = 'none';
+
+      const email = document.getElementById('email').value.trim();
+      const password = document.getElementById('password').value;
+
+      if (!email || !password) {
+        showError('Please enter your email and password.');
+        return;
+      }
+
+      setLoading(true);
+      try {
+        const r = await fetch('/api/auth/login', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          credentials: 'include',
+          body: JSON.stringify({ email, password })
+        });
+        const data = await r.json();
+
+        if (!r.ok) {
+          showError(data.error || 'Login failed. Please try again.');
+          return;
+        }
+
+        // Staff role not allowed on this page
+        if (data.user && data.user.role === 'staff') {
+          // Log back out
+          await fetch('/api/auth/logout', { method: 'POST', credentials: 'include' });
+          showError('Staff accounts must use the main login page with Microsoft sign-in.');
+          return;
+        }
+
+        window.location.href = '/it/dashboard.html';
+      } catch (err) {
+        showError('Connection error. Please try again.');
+      } finally {
+        setLoading(false);
+      }
+    });
+  })();
+  </script>
+</body>
+</html>

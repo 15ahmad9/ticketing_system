@@ -1,0 +1,296 @@
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>IT Department Dashboard — LTUC</title>
+  <link rel="stylesheet" href="/css/style.css">
+</head>
+<body>
+
+<!-- PIN Entry Screen -->
+<div id="pinScreen" class="pin-screen">
+  <div class="pin-card">
+    <img src="/images/ltuc-logo.jpg" alt="LTUC" class="ltuc-logo" style="height:60px;">
+    <h2>IT Department Dashboard</h2>
+    <p>Enter PIN to display</p>
+    <input type="password"
+           id="pinInput"
+           maxlength="20"
+           placeholder="Enter PIN"
+           class="pin-input">
+    <button id="pinSubmitBtn" class="pin-submit-btn">Access Dashboard</button>
+    <p id="pinError" class="pin-error"></p>
+  </div>
+</div>
+
+<!-- Dashboard Screen (hidden until PIN correct) -->
+<div id="dashScreen" class="dash-screen" style="display:none">
+
+  <!-- Header Bar -->
+  <div class="screen-header">
+    <div class="screen-header-left">
+      <img src="/images/ltuc-logo.jpg" alt="LTUC" class="screen-logo">
+      <div>
+        <h1>IT Department</h1>
+        <p>Live Ticket Dashboard</p>
+      </div>
+    </div>
+    <div class="screen-header-right">
+      <div id="screenClock" class="screen-clock"></div>
+      <div class="refresh-indicator">&#x1F504; Auto-refreshes every 30s</div>
+    </div>
+  </div>
+
+  <!-- Stats Row -->
+  <div class="screen-stats-row">
+    <div class="screen-stat-card submitted">
+      <div class="screen-stat-number" id="statSubmitted">—</div>
+      <div class="screen-stat-label">Submitted</div>
+    </div>
+    <div class="screen-stat-card inprogress">
+      <div class="screen-stat-number" id="statInProgress">—</div>
+      <div class="screen-stat-label">In Progress</div>
+    </div>
+    <div class="screen-stat-card deferred">
+      <div class="screen-stat-number" id="statDeferred">—</div>
+      <div class="screen-stat-label">Deferred</div>
+    </div>
+    <div class="screen-stat-card resolved">
+      <div class="screen-stat-number" id="statResolved">—</div>
+      <div class="screen-stat-label">Resolved</div>
+    </div>
+    <div class="screen-stat-card today">
+      <div class="screen-stat-number" id="statToday">—</div>
+      <div class="screen-stat-label">Resolved Today</div>
+    </div>
+    <div class="screen-stat-card avg">
+      <div class="screen-stat-number" id="statAvg">—</div>
+      <div class="screen-stat-label">Avg Resolution (days)</div>
+    </div>
+  </div>
+
+  <!-- Middle Row: Category + Status breakdown -->
+  <div class="screen-middle-row">
+    <div class="screen-card">
+      <h3>Active Tickets by Category</h3>
+      <p style="color:rgba(255,255,255,0.5);font-size:0.78rem;margin:0 0 8px;">Submitted + In Progress + Deferred</p>
+      <div id="categoryBars"></div>
+    </div>
+    <div class="screen-card">
+      <h3>Tickets by Status</h3>
+      <div id="statusBars"></div>
+    </div>
+  </div>
+
+  <!-- In Progress Tickets Table -->
+  <div class="screen-card screen-table-card">
+    <h3>Currently Active Tickets</h3>
+    <table class="screen-tickets-table">
+      <thead>
+        <tr>
+          <th>Ticket #</th>
+          <th>Title</th>
+          <th>Category</th>
+          <th>Priority</th>
+          <th>Submitted By</th>
+          <th>Assigned To</th>
+          <th>Last Updated</th>
+        </tr>
+      </thead>
+      <tbody id="inProgressBody"></tbody>
+    </table>
+  </div>
+
+</div>
+
+<script>
+  let storedPin = '';
+
+  // ── PIN Submit ──────────────────────────────────────────────────────────────
+  document.getElementById('pinSubmitBtn').addEventListener('click', submitPin);
+  document.getElementById('pinInput').addEventListener('keydown', (e) => {
+    if (e.key === 'Enter') submitPin();
+  });
+
+  async function submitPin() {
+    const pin = document.getElementById('pinInput').value.trim();
+    const errEl = document.getElementById('pinError');
+    errEl.textContent = '';
+    if (!pin) { errEl.textContent = 'Please enter the PIN.'; return; }
+
+    try {
+      const res = await fetch('/api/screen/verify-pin', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ pin })
+      });
+      const data = await res.json();
+      if (res.ok && data.success) {
+        storedPin = pin;
+        sessionStorage.setItem('screenPin', pin);
+        document.getElementById('pinScreen').style.display = 'none';
+        document.getElementById('dashScreen').style.display = 'flex';
+        startDashboard();
+      } else {
+        errEl.textContent = data.error || 'Invalid PIN. Please try again.';
+      }
+    } catch (err) {
+      errEl.textContent = 'Connection error. Please try again.';
+    }
+  }
+
+  // ── Auto-restore PIN from sessionStorage ───────────────────────────────────
+  window.addEventListener('DOMContentLoaded', () => {
+    const saved = sessionStorage.getItem('screenPin');
+    if (saved) {
+      storedPin = saved;
+      document.getElementById('pinScreen').style.display = 'none';
+      document.getElementById('dashScreen').style.display = 'flex';
+      startDashboard();
+    }
+  });
+
+  // ── Dashboard ───────────────────────────────────────────────────────────────
+  function startDashboard() {
+    loadData();
+    startClock();
+    setInterval(loadData, 30 * 1000);
+  }
+
+  async function loadData() {
+    try {
+      const res = await fetch('/api/screen/data', {
+        headers: { 'X-Screen-Pin': storedPin }
+      });
+      if (res.status === 403) {
+        sessionStorage.removeItem('screenPin');
+        location.reload();
+        return;
+      }
+      const data = await res.json();
+      renderStats(data.stats);
+      renderCategoryBars(data.byCategory);
+      renderStatusBars(data.byStatus);
+      renderInProgress(data.activeTickets);
+    } catch (err) {
+      console.error('Failed to load screen data:', err);
+    }
+  }
+
+  function renderStats(stats) {
+    document.getElementById('statSubmitted').textContent = stats.submitted;
+    document.getElementById('statInProgress').textContent = stats.inProgress;
+    document.getElementById('statDeferred').textContent = stats.deferred || 0;
+    document.getElementById('statResolved').textContent = stats.resolved;
+    document.getElementById('statToday').textContent = stats.resolvedToday;
+    document.getElementById('statAvg').textContent = stats.avgResolutionDays;
+  }
+
+  function renderCategoryBars(data) {
+    const container = document.getElementById('categoryBars');
+    if (!data || data.length === 0) {
+      container.innerHTML = '<p style="color:rgba(255,255,255,0.4);font-size:0.85rem;">No data</p>';
+      return;
+    }
+    const max = Math.max(...data.map(d => d.count), 1);
+    container.innerHTML = data.map(d => {
+      const pct = Math.round((d.count / max) * 100);
+      return `<div class="bar-row">
+        <span class="bar-label">${escHtml(d.category)}</span>
+        <div class="bar-track">
+          <div class="bar-fill" style="width:${pct}%"></div>
+        </div>
+        <span class="bar-count">${d.count}</span>
+      </div>`;
+    }).join('');
+  }
+
+  function renderStatusBars(data) {
+    const container = document.getElementById('statusBars');
+    if (!data || data.length === 0) {
+      container.innerHTML = '<p style="color:rgba(255,255,255,0.4);font-size:0.85rem;">No data</p>';
+      return;
+    }
+    const max = Math.max(...data.map(d => d.count), 1);
+    const colors = {
+      'Open': '#2e6da4',
+      'Submitted': '#2e6da4',
+      'In Progress': '#e67e22',
+      'Deferred': '#8e44ad',
+      'Resolved': '#27ae60'
+    };
+    container.innerHTML = data.map(d => {
+      const pct = Math.round((d.count / max) * 100);
+      const color = colors[d.status] || '#2e86c1';
+      return `<div class="bar-row">
+        <span class="bar-label">${escHtml(d.status)}</span>
+        <div class="bar-track">
+          <div class="bar-fill" style="width:${pct}%;background:${color}"></div>
+        </div>
+        <span class="bar-count">${d.count}</span>
+      </div>`;
+    }).join('');
+  }
+
+  function renderInProgress(tickets) {
+    const tbody = document.getElementById('inProgressBody');
+    if (!tickets || tickets.length === 0) {
+      tbody.innerHTML = '<tr><td colspan="7" style="text-align:center;color:rgba(255,255,255,0.4);padding:20px;">No tickets currently in progress</td></tr>';
+      return;
+    }
+    const priorityColors = {
+      'Critical': '#c0392b',
+      'High': '#e67e22',
+      'Medium': '#2980b9',
+      'Low': '#27ae60'
+    };
+    tbody.innerHTML = tickets.map(t => {
+      const color = priorityColors[t.priority] || '#7f8c8d';
+      return `<tr>
+        <td><strong>${escHtml(t.ticket_number)}</strong></td>
+        <td>${escHtml(t.title)}</td>
+        <td>${escHtml(t.category)}</td>
+        <td><span style="background:${color};color:white;padding:2px 8px;border-radius:12px;font-size:0.75rem;font-weight:600;">${escHtml(t.priority)}</span></td>
+        <td>${escHtml(t.submitted_by_name)}</td>
+        <td>${escHtml(t.assigned_to_name)}</td>
+        <td>${escHtml(t.updated_formatted)}</td>
+      </tr>`;
+    }).join('');
+  }
+
+  // ── Clock ───────────────────────────────────────────────────────────────────
+  function startClock() {
+    updateClock();
+    setInterval(updateClock, 1000);
+  }
+
+  function updateClock() {
+    const now = new Date();
+    const days = ['Sunday','Monday','Tuesday','Wednesday','Thursday','Friday','Saturday'];
+    const months = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
+    const dayName = days[now.getDay()];
+    const day = String(now.getDate()).padStart(2, '0');
+    const month = months[now.getMonth()];
+    const year = now.getFullYear();
+    const hh = String(now.getHours()).padStart(2, '0');
+    const mm = String(now.getMinutes()).padStart(2, '0');
+    const ss = String(now.getSeconds()).padStart(2, '0');
+    document.getElementById('screenClock').textContent =
+      `${dayName}, ${day} ${month} ${year}  ${hh}:${mm}:${ss}`;
+  }
+
+  // ── Helpers ─────────────────────────────────────────────────────────────────
+  function escHtml(str) {
+    if (str == null) return '';
+    return String(str)
+      .replace(/&/g, '&amp;')
+      .replace(/</g, '&lt;')
+      .replace(/>/g, '&gt;')
+      .replace(/"/g, '&quot;');
+  }
+</script>
+
+</body>
+</html>

@@ -1,0 +1,65 @@
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>LTUC IT Ticketing System</title>
+  <link rel="stylesheet" href="/css/style.css" />
+</head>
+<body style="min-height:100vh;background:#1a3a5c;">
+  <div class="login-wrapper" style="min-height:calc(100vh - 51px);display:flex;align-items:center;justify-content:center;padding-bottom:60px;">
+    <div class="card">
+
+      <img src="/images/ltuc-logo.jpg" alt="LTUC" class="ltuc-logo">
+
+      <div class="card-header">
+        <h1 class="system-title">LTUC IT Ticketing System</h1>
+        <p class="system-subtitle">Luminus Technical University College</p>
+      </div>
+
+      <!-- SSO Error Message -->
+      <div id="errorMessage" class="error-message" role="alert" aria-live="polite"></div>
+
+      <!-- Microsoft SSO — Primary -->
+      <div class="sso-section">
+        <a href="/api/auth/microsoft" class="btn-microsoft">
+          <img src="/images/microsoft-logo.svg" alt="Microsoft" class="ms-logo">
+          Sign in with Microsoft
+        </a>
+        <p class="sso-hint">For LTUC staff — use your Outlook account</p>
+      </div>
+
+      <p class="footer-note">Internal use only &mdash; LTUC Intranet</p>
+    </div>
+  </div>
+
+  <script>
+    (function () {
+      const params = new URLSearchParams(window.location.search);
+      const err = params.get('error');
+      const msgs = {
+        sso_failed:      'Microsoft sign-in failed. Please try again.',
+        invalid_domain:  'Only @ltuc.edu.jo accounts are allowed.',
+        deactivated:     'Your account has been deactivated. Contact IT support.'
+      };
+      if (err && msgs[err]) {
+        const el = document.getElementById('errorMessage');
+        el.textContent = msgs[err];
+        el.style.display = 'block';
+      }
+    })();
+  </script>
+  <a href="/admin-login.html" class="admin-hidden-link" title="Administrator Access">⚙</a>
+
+  <footer class="site-footer" style="color:rgba(255,255,255,0.6);">
+    <div class="footer-content">
+      <span>LTUC IT Department</span>
+      <span class="footer-divider">|</span>
+      <span>LTUC IT Ticketing System <strong>v1.5.4</strong></span>
+      <span class="footer-divider">|</span>
+      <span>© 2026 Luminus Technical University College</span>
+    </div>
+  </footer>
+</body>
+</html>
