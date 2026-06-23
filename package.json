@@ -1,0 +1,8 @@
+{
+  "name": "ltuc-ticketing-system-fixed",
+  "version": "1.0.0",
+  "description": "Fixed demo backend and static frontend for LTUC IT Ticketing System",
+  "main": "server.js",
+  "scripts": { "start": "node server.js" },
+  "license": "UNLICENSED"
+}

@@ -1,0 +1,2322 @@
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>IT Dashboard — LTUC IT Ticketing</title>
+  <link rel="stylesheet" href="/css/style.css" />
+</head>
+<body style="margin:0; padding:0; background:#f0f4f8;">
+<div>
+
+  <!-- ── Navbar ─────────────────────────────────────────────── -->
+  <nav class="navbar" style="display:flex;justify-content:space-between;align-items:center;padding:0 24px;background:#1a3a5c;height:56px;">
+    <div>
+      <img src="/images/ltuc-logo.jpg" alt="LTUC" class="ltuc-logo">
+      <span class="navbar-brand">LTUC IT Ticketing System</span>
+      <span class="navbar-sub">IT Dashboard</span>
+    </div>
+    <div class="nav-right" style="display:flex;align-items:center;gap:12px;">
+      <span id="welcomeName"></span>
+      <a href="/analytics.html" class="nav-link">&#128202; Analytics</a>
+      <button id="itSubmitTicketBtn" class="btn-submit-ticket-it">+ Submit Ticket</button>
+      <div class="notif-wrapper">
+        <button class="notif-bell" id="notifBell">&#128276;<span class="notif-badge" id="notifBadge"></span></button>
+        <div class="notif-dropdown" id="notifDropdown">
+          <div class="notif-header">
+            <span>Notifications</span>
+            <button id="markAllRead">Mark all read</button>
+          </div>
+          <div id="notifList"></div>
+        </div>
+      </div>
+      <button id="logoutBtn" class="btn-logout">Sign Out</button>
+    </div>
+  </nav>
+
+  <!-- ── Tab Bar (admin only — hidden until auth confirms admin) -->
+  <div class="tab-bar" id="tabBar" style="display:none">
+    <button class="tab-btn active" data-tab="tickets">Tickets</button>
+    <button class="tab-btn" data-tab="admin">Admin Panel</button>
+    <button class="tab-btn" data-tab="logs">&#128203; Logs</button>
+  </div>
+
+  <!-- ── Main Content ───────────────────────────────────────── -->
+  <main class="main-content">
+
+    <!-- ══ TICKETS TAB ════════════════════════════════════════ -->
+    <div class="tab-content active" id="tab-tickets" style="width:100%;">
+
+      <!-- Stats bar -->
+      <div class="stats-bar">
+        <div class="stat-card">
+          <div class="stat-number" id="statTotal">—</div>
+          <div class="stat-label">Total</div>
+        </div>
+        <div class="stat-card stat-open">
+          <div class="stat-number" id="statOpen">—</div>
+          <div class="stat-label">Submitted</div>
+        </div>
+        <div class="stat-card stat-inprogress">
+          <div class="stat-number" id="statInProgress">—</div>
+          <div class="stat-label">In Progress</div>
+        </div>
+        <div class="stat-card stat-deferred">
+          <div class="stat-number" id="statDeferred">—</div>
+          <div class="stat-label">Deferred</div>
+        </div>
+        <div class="stat-card stat-resolved">
+          <div class="stat-number" id="statResolved">—</div>
+          <div class="stat-label">Resolved</div>
+        </div>
+      </div>
+
+      <!-- Filter bar -->
+      <div class="filter-bar">
+
+        <!-- Status multi-select -->
+        <div class="multi-select-wrapper" id="wrapperStatus">
+          <button class="multi-select-btn" id="btnStatus" type="button">All Statuses &#9662;</button>
+          <div class="multi-select-dropdown" id="dropStatus" style="display:none">
+            <label class="multi-opt"><input type="checkbox" value="Submitted"> Submitted</label>
+            <label class="multi-opt"><input type="checkbox" value="In Progress"> In Progress</label>
+            <label class="multi-opt"><input type="checkbox" value="Deferred"> Deferred</label>
+            <label class="multi-opt"><input type="checkbox" value="Resolved"> Resolved</label>
+          </div>
+        </div>
+
+        <!-- Category multi-select -->
+        <div class="multi-select-wrapper" id="wrapperCategory">
+          <button class="multi-select-btn" id="btnCategory" type="button">All Categories &#9662;</button>
+          <div class="multi-select-dropdown" id="dropCategory" style="display:none">
+            <label class="multi-opt"><input type="checkbox" value="ERP System"> ERP System</label>
+            <label class="multi-opt"><input type="checkbox" value="Academia"> Academia</label>
+            <label class="multi-opt"><input type="checkbox" value="Training Module"> Training Module</label>
+            <label class="multi-opt"><input type="checkbox" value="Moodle"> Moodle</label>
+            <label class="multi-opt"><input type="checkbox" value="IT Support"> IT Support</label>
+          </div>
+        </div>
+
+        <!-- Priority multi-select -->
+        <div class="multi-select-wrapper" id="wrapperPriority">
+          <button class="multi-select-btn" id="btnPriority" type="button">All Priorities &#9662;</button>
+          <div class="multi-select-dropdown" id="dropPriority" style="display:none">
+            <label class="multi-opt"><input type="checkbox" value="Low"> Low</label>
+            <label class="multi-opt"><input type="checkbox" value="Medium"> Medium</label>
+            <label class="multi-opt"><input type="checkbox" value="High"> High</label>
+            <label class="multi-opt"><input type="checkbox" value="Critical"> Critical</label>
+          </div>
+        </div>
+
+        <!-- Approval multi-select -->
+        <div class="multi-select-wrapper" id="wrapperApproval">
+          <button class="multi-select-btn" id="btnApproval" type="button">All Tickets &#9662;</button>
+          <div class="multi-select-dropdown" id="dropApproval" style="display:none">
+            <label class="multi-opt"><input type="checkbox" value="yes"> Needs Approval</label>
+            <label class="multi-opt"><input type="checkbox" value="no"> No Approval Needed</label>
+          </div>
+        </div>
+
+        <!-- Assigned To multi-select -->
+        <div class="multi-select-wrapper" id="wrapperAssignedTo">
+          <button class="multi-select-btn" id="btnAssignedTo" type="button">All Assigned &#9662;</button>
+          <div class="multi-select-dropdown" id="dropAssignedTo" style="display:none">
+            <label class="multi-opt"><input type="checkbox" value="unassigned"> Unassigned</label>
+          </div>
+        </div>
+
+        <input type="text" id="filterSearch" placeholder="Search ticket # or title…" />
+        <button class="btn-filter-clear" id="clearFilters">Clear</button>
+        <button class="btn-export-users" id="exportTicketsBtn">&#128229; Export CSV</button>
+      </div>
+
+      <!-- Tickets table -->
+      <div class="table-scroll-wrapper">
+        <table class="tickets-table">
+          <thead>
+            <tr>
+              <th>Ticket #</th>
+              <th>Title</th>
+              <th>Category</th>
+              <th>Priority</th>
+              <th>Status</th>
+              <th>Approval</th>
+              <th>Feedback</th>
+              <th>Submitted By</th>
+              <th>Assigned To</th>
+              <th>Date</th>
+            </tr>
+          </thead>
+          <tbody id="ticketsBody">
+            <tr><td colspan="10" class="table-empty">Loading…</td></tr>
+          </tbody>
+        </table>
+      </div>
+
+    </div><!-- /tab-tickets -->
+
+    <!-- ══ ADMIN PANEL TAB ════════════════════════════════════ -->
+    <div class="tab-content" id="tab-admin">
+
+      <!-- Admin stats bar -->
+      <div class="admin-stats-bar">
+        <div class="admin-stat-card">
+          <div class="stat-number" id="auStatTotal">—</div>
+          <div class="stat-label">Total Users</div>
+        </div>
+        <div class="admin-stat-card">
+          <div class="stat-number" id="auStatStaff">—</div>
+          <div class="stat-label">Staff</div>
+        </div>
+        <div class="admin-stat-card">
+          <div class="stat-number" id="auStatIT">—</div>
+          <div class="stat-label">IT Members</div>
+        </div>
+        <div class="admin-stat-card">
+          <div class="stat-number" id="auStatActive">—</div>
+          <div class="stat-label">Active</div>
+        </div>
+        <div class="admin-stat-card">
+          <div class="stat-number" id="auStatInactive">—</div>
+          <div class="stat-label">Inactive</div>
+        </div>
+      </div>
+
+      <!-- Add User Form (collapsible) -->
+      <button class="add-user-toggle-btn" id="toggleAddUser">+ Add New User</button>
+      <div class="add-user-form" id="addUserForm">
+        <div class="add-user-grid">
+          <div class="form-group">
+            <label for="auFullName">Full Name <span style="color:#c0392b">*</span></label>
+            <input type="text" id="auFullName" placeholder="e.g. Jane Smith" />
+          </div>
+          <div class="form-group">
+            <label for="auEmail">Email <span style="color:#c0392b">*</span></label>
+            <input type="text" id="auEmail" placeholder="name@ltuc.edu.jo" />
+          </div>
+          <div class="form-group">
+            <label for="auPassword">Password <span style="color:#c0392b">*</span></label>
+            <input type="text" id="auPassword" placeholder="Min. 8 characters" />
+          </div>
+          <div class="form-group">
+            <label for="auRole">Role <span style="color:#c0392b">*</span></label>
+            <select id="auRole">
+              <option value="">— Select role —</option>
+              <option value="staff">Staff</option>
+              <option value="it">IT</option>
+            </select>
+          </div>
+          <div class="form-group">
+            <label for="auDepartment">Department <span style="color:#c0392b">*</span></label>
+            <input type="text" id="auDepartment" placeholder="e.g. Finance" />
+          </div>
+        </div>
+        <div class="add-user-submit-row">
+          <button class="add-user-submit-btn" id="addUserBtn">Add User</button>
+          <span class="add-user-inline-msg" id="addUserMsg"></span>
+        </div>
+      </div>
+
+      <!-- User filter/search bar -->
+      <div class="user-filter-bar">
+        <input type="text" id="userSearch" placeholder="Search by name or email…" class="user-search-input">
+        <select id="filterRole">
+          <option value="">All Roles</option>
+          <option value="staff">Staff</option>
+          <option value="it">IT</option>
+          <option value="admin">Admin</option>
+        </select>
+        <select id="filterDept">
+          <option value="">All Departments</option>
+        </select>
+        <select id="filterCategoryUser">
+          <option value="">All Categories</option>
+          <option value="ERP System">ERP System</option>
+          <option value="Academia">Academia</option>
+          <option value="Training Module">Training Module</option>
+          <option value="Moodle">Moodle</option>
+          <option value="IT Support">IT Support</option>
+        </select>
+        <select id="filterUserStatus">
+          <option value="">All Status</option>
+          <option value="1">Active</option>
+          <option value="0">Inactive</option>
+        </select>
+        <button id="exportUsersBtn" class="btn-export-users">&#128229; Export CSV</button>
+        <button id="clearUserFilters" class="btn-clear-filters">Clear</button>
+      </div>
+
+      <!-- User table -->
+      <div class="table-scroll-wrapper">
+        <table class="user-table">
+          <thead>
+            <tr>
+              <th>Full Name</th>
+              <th>Email</th>
+              <th>Role</th>
+              <th>Department</th>
+              <th>Category</th>
+              <th>Status</th>
+              <th>Joined</th>
+              <th>Actions</th>
+            </tr>
+          </thead>
+          <tbody id="usersBody">
+            <tr><td colspan="8" class="table-empty">Loading…</td></tr>
+          </tbody>
+        </table>
+      </div>
+
+    </div><!-- /tab-admin -->
+
+    <!-- ══ LOGS TAB ════════════════════════════════════════════ -->
+    <div class="tab-content" id="tab-logs">
+
+      <div class="logs-header">
+        <div class="logs-tabs">
+          <button class="log-type-btn active" data-log="auth">&#128272; Login Attempts</button>
+          <button class="log-type-btn" data-log="tickets">&#127903; Ticket Activity</button>
+          <button class="log-type-btn" data-log="email">&#128231; Email Log</button>
+          <button class="log-type-btn" data-log="access">&#127760; Access Log</button>
+        </div>
+        <div class="logs-actions">
+          <input type="text" id="logSearch" placeholder="Search logs..." class="log-search-input">
+          <button id="refreshLogsBtn" class="btn-export-users">&#128260; Refresh</button>
+        </div>
+      </div>
+
+      <div id="authLogStats" class="log-stats-bar" style="display:none;">
+        <div class="log-stat">
+          <span id="statSuccess">0</span>
+          <label>Successful Logins</label>
+        </div>
+        <div class="log-stat success">
+          <span id="statFailed">0</span>
+          <label>Failed Attempts</label>
+        </div>
+        <div class="log-stat warning">
+          <span id="statUnique">0</span>
+          <label>Unique IPs</label>
+        </div>
+      </div>
+
+      <div class="log-table-wrapper">
+        <table class="log-table">
+          <thead id="logTableHead"></thead>
+          <tbody id="logTableBody"></tbody>
+        </table>
+      </div>
+
+      <p class="log-note">Showing last 200 entries. Newest first.</p>
+
+    </div><!-- /tab-logs -->
+
+  </main>
+
+  <!-- ── Ticket Detail Modal (IT version) ───────────────────── -->
+  <div class="modal-overlay" id="ticketModal" role="dialog" aria-modal="true">
+    <div class="modal-box">
+      <div class="modal-header">
+        <div>
+          <p class="modal-ticket-number" id="modalTicketNumber"></p>
+          <h3 class="modal-title" id="modalTitle"></h3>
+        </div>
+        <button class="modal-close" id="modalClose" aria-label="Close">&times;</button>
+      </div>
+
+      <div class="modal-body">
+        <div class="modal-meta-grid">
+          <div class="modal-meta-item">
+            <label>Status</label>
+            <select id="modalStatusSelect">
+              <option value="Submitted">Submitted</option>
+              <option value="In Progress">In Progress</option>
+              <option value="Deferred">Deferred</option>
+              <option value="Resolved">Resolved</option>
+            </select>
+          </div>
+          <div class="modal-meta-item">
+            <label>Priority</label>
+            <span id="modalPriorityBadge"></span>
+            <select id="modalPrioritySelect" style="display:none;">
+              <option value="Low">Low</option>
+              <option value="Medium">Medium</option>
+              <option value="High">High</option>
+              <option value="Critical">Critical</option>
+            </select>
+          </div>
+          <div class="modal-meta-item" id="categoryChangeSection">
+            <label>Category</label>
+            <span id="modalCategory"></span>
+            <select id="modalCategorySelect" style="display:none;">
+              <option value="ERP System">ERP System</option>
+              <option value="Academia">Academia</option>
+              <option value="Training Module">Training Module</option>
+              <option value="Moodle">Moodle</option>
+              <option value="IT Support">IT Support</option>
+            </select>
+          </div>
+          <div class="modal-meta-item" id="assignSection">
+            <label>Assign To</label>
+            <select id="modalAssignSelect">
+              <option value="">— Unassigned —</option>
+            </select>
+            <span id="assignCategoryMsg" style="display:none;font-size:0.82rem;color:#e67e22;margin-top:4px;display:block;"></span>
+          </div>
+          <div class="modal-meta-item">
+            <label>Submitted By</label>
+            <span id="modalSubmittedBy"></span>
+          </div>
+          <div class="modal-meta-item">
+            <label>Date</label>
+            <span id="modalDate"></span>
+          </div>
+        </div>
+
+        <p class="modal-section-title">Description</p>
+        <div class="modal-description" id="modalDescription"></div>
+
+        <!-- CC management -->
+        <div class="cc-section" id="ccSection" style="margin-top:16px;padding:12px;background:#f9fbfd;border:1px solid #e0e8f0;border-radius:6px;">
+          <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:8px;">
+            <strong style="color:#1a3a5c;">Shared With (CC)</strong>
+            <button type="button" class="btn-secondary" id="editCcBtn" style="display:none;padding:4px 10px;font-size:0.82rem;">Edit</button>
+          </div>
+          <div id="ccDisplay" style="font-size:0.9rem;color:#425b72;"></div>
+          <div id="ccEditForm" style="display:none;margin-top:10px;">
+            <input type="email" id="ccEdit1" placeholder="CC Email 1 (e.g. colleague@ltuc.edu.jo)" style="display:block;width:100%;padding:6px 8px;margin-bottom:6px;border:1px solid #cbd5e1;border-radius:4px;">
+            <input type="email" id="ccEdit2" placeholder="CC Email 2 (optional)" style="display:block;width:100%;padding:6px 8px;margin-bottom:8px;border:1px solid #cbd5e1;border-radius:4px;">
+            <div id="ccEditError" style="color:#b91c1c;font-size:0.82rem;margin-bottom:6px;display:none;"></div>
+            <button type="button" class="btn-sm-primary" id="saveCcBtn" style="padding:6px 14px;font-size:0.85rem;">Save CC</button>
+            <button type="button" class="btn-secondary" id="cancelCcBtn" style="padding:6px 14px;font-size:0.85rem;">Cancel</button>
+          </div>
+        </div>
+
+        <div class="attachments-section" id="attachmentsSection" style="display:none;">
+          <h4>Attachments</h4>
+          <div id="attachmentsList"></div>
+        </div>
+
+        <p class="modal-section-title">Updates &amp; Comments</p>
+        <div class="updates-list" id="updatesList"></div>
+
+        <!-- Approval status badge (shown when approval_status is set) -->
+        <div class="approval-status-section" id="approvalStatusSection" style="display:none;">
+          <span class="approval-badge" id="approvalStatusBadge"></span>
+          <p class="approval-note" id="approvalNoteText"></p>
+        </div>
+
+        <!-- Request approval button (assigned IT member only, no approval yet) -->
+        <div class="approval-section" id="approvalSection" style="display:none;">
+          <button class="btn-request-approval" id="requestApprovalBtn">&#128276; Request IT Manager Approval</button>
+        </div>
+
+        <!-- IT Manager decision panel (visible to manager when ticket needs approval) -->
+        <div class="manager-approval-panel" id="managerApprovalPanel" style="display:none;">
+          <h4>IT Manager Decision</h4>
+          <select id="approvalDecision">
+            <option value="Approved">&#10003; Approved</option>
+            <option value="Rejected">&#10007; Rejected</option>
+            <option value="Needs Clarification">&#10067; Needs Clarification</option>
+          </select>
+          <textarea id="approvalNote" placeholder="Add a note (optional)…" rows="2"></textarea>
+          <button id="submitApprovalBtn">Submit Decision</button>
+        </div>
+      </div>
+
+      <div class="modal-actions">
+        <textarea
+          class="modal-comment-area"
+          id="commentText"
+          placeholder="Add a comment (optional when saving changes)…"
+          rows="3"
+        ></textarea>
+        <input type="file" id="itCommentAttachments" multiple class="file-input" style="margin-top:6px;" />
+        <p class="file-hint" style="margin-bottom:4px;">Attachments (optional, max 10MB each)</p>
+        <div class="modal-action-row">
+          <button class="btn-secondary" id="modalCloseBtn">Close</button>
+          <button class="btn-sm-primary" id="addCommentBtn">Add Comment</button>
+          <button class="btn-sm-primary" id="saveChangesBtn" style="background:#065f46;">Save Changes</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ── IT Submit Ticket Modal ────────────────────────────── -->
+  <div class="modal-overlay" id="itNewTicketModal" role="dialog" aria-modal="true">
+    <div class="modal-box">
+      <div class="modal-header">
+        <h3 class="modal-title">Submit New Ticket</h3>
+        <button class="modal-close" id="closeItTicketModal" aria-label="Close">&times;</button>
+      </div>
+      <div class="modal-body">
+        <form id="itSubmitForm" novalidate>
+
+          <div class="form-group-dash">
+            <label for="itTicketTitle">Title <span style="color:#c0392b">*</span></label>
+            <input type="text" id="itTicketTitle" placeholder="Brief summary of the issue" maxlength="200" required />
+          </div>
+
+          <div class="form-group-dash">
+            <label for="itTicketCategory">Category <span style="color:#c0392b">*</span></label>
+            <select id="itTicketCategory" required>
+              <option value="">— Select category —</option>
+              <option value="ERP System">ERP System</option>
+              <option value="Academia">Academia</option>
+              <option value="Training Module">Training Module</option>
+              <option value="Moodle">Moodle</option>
+              <option value="IT Support">IT Support</option>
+            </select>
+          </div>
+
+          <div class="form-group-dash">
+            <label for="itTicketPriority">Priority <span style="color:#c0392b">*</span></label>
+            <select id="itTicketPriority" required>
+              <option value="">— Select priority —</option>
+              <option value="Low">Low</option>
+              <option value="Medium" selected>Medium</option>
+              <option value="High">High</option>
+              <option value="Critical">Critical</option>
+            </select>
+          </div>
+
+          <div class="form-group-dash">
+            <label for="itTicketDescription">Description <span style="color:#c0392b">*</span></label>
+            <textarea id="itTicketDescription" rows="5" placeholder="Describe the issue in detail…" required></textarea>
+          </div>
+
+          <div class="form-group-dash">
+            <label>CC Email 1 <span style="color:#6c7a89;font-weight:400;">(optional)</span></label>
+            <input type="email" id="itCcEmail1" placeholder="colleague@ltuc.edu.jo" class="form-control">
+          </div>
+          <div class="form-group-dash">
+            <label>CC Email 2 <span style="color:#6c7a89;font-weight:400;">(optional)</span></label>
+            <input type="email" id="itCcEmail2" placeholder="colleague@ltuc.edu.jo" class="form-control">
+          </div>
+
+          <div class="form-group-dash">
+            <label>Attachments <span style="color:#6c7a89;font-weight:400;">(optional)</span></label>
+            <input type="file" id="itTicketAttachments" multiple class="file-input" />
+            <p class="file-hint">Any file type &mdash; max 10MB per file</p>
+            <div id="itFilePreview" class="file-preview"></div>
+          </div>
+
+          <div id="itTicketMsg" style="color:#b91c1c;font-size:0.85rem;margin-bottom:12px;"></div>
+
+          <div class="modal-action-row">
+            <button type="button" class="btn-secondary" id="closeItTicketModal2">Cancel</button>
+            <button type="button" class="btn-sm-primary" id="itSubmitTicketConfirm">Submit Ticket</button>
+          </div>
+        </form>
+      </div>
+    </div>
+  </div>
+
+  <!-- ── Edit User Modal ────────────────────────────────────── -->
+  <div class="modal-overlay" id="editUserModal" role="dialog" aria-modal="true">
+    <div class="modal-box" style="max-width:480px">
+      <div class="modal-header">
+        <h3 class="modal-title">Edit User</h3>
+        <button class="modal-close" id="editUserModalClose" aria-label="Close">&times;</button>
+      </div>
+      <div class="modal-body">
+        <div class="modal-form-group">
+          <label for="editFullName">Full Name <span style="color:#c0392b">*</span></label>
+          <input type="text" id="editFullName" placeholder="Full name" />
+        </div>
+        <div class="modal-form-group">
+          <label for="editEmail">Email <span style="color:#c0392b">*</span></label>
+          <input type="text" id="editEmail" placeholder="name@ltuc.edu.jo" />
+        </div>
+        <div class="modal-form-group">
+          <label for="editDepartment">Department</label>
+          <input type="text" id="editDepartment" placeholder="Department" />
+        </div>
+        <div class="modal-error-msg" id="editUserError"></div>
+      </div>
+      <div class="modal-actions">
+        <div class="modal-action-row">
+          <button class="btn-secondary" id="editUserCancelBtn">Cancel</button>
+          <button class="btn-sm-primary" id="editUserSaveBtn">Save Changes</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ── Reset Password Modal ───────────────────────────────── -->
+  <div class="modal-overlay" id="resetPwModal" role="dialog" aria-modal="true">
+    <div class="modal-box" style="max-width:420px">
+      <div class="modal-header">
+        <h3 class="modal-title">Reset Password</h3>
+        <button class="modal-close" id="resetPwModalClose" aria-label="Close">&times;</button>
+      </div>
+      <div class="modal-body">
+        <div class="modal-form-group">
+          <label for="resetPwInput">New Password <span style="color:#c0392b">*</span></label>
+          <input type="text" id="resetPwInput" placeholder="Min. 8 characters" />
+        </div>
+        <div class="modal-error-msg" id="resetPwError"></div>
+      </div>
+      <div class="modal-actions">
+        <div class="modal-action-row">
+          <button class="btn-secondary" id="resetPwCancelBtn">Cancel</button>
+          <button class="btn-sm-primary" id="resetPwSaveBtn">Save</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ── Change Role Modal ─────────────────────────────────── -->
+  <div class="modal-overlay" id="changeRoleModal" role="dialog" aria-modal="true">
+    <div class="modal-box" style="max-width:420px">
+      <div class="modal-header">
+        <h3 class="modal-title" id="changeRoleTitle">Change Role</h3>
+        <button class="modal-close" id="changeRoleModalClose" aria-label="Close">&times;</button>
+      </div>
+      <div class="modal-body">
+        <div class="modal-form-group">
+          <label>Current Role</label>
+          <div id="changeRoleCurrentBadge"></div>
+        </div>
+        <div class="modal-form-group">
+          <label for="changeRoleSelect">New Role <span style="color:#c0392b">*</span></label>
+          <select id="changeRoleSelect">
+            <option value="staff">Staff</option>
+            <option value="it">IT Member</option>
+            <option value="admin">Admin</option>
+          </select>
+        </div>
+        <div id="changeRoleAdminWarning" style="display:none; color:#e67e22; font-size:0.85rem; margin-top:8px;">
+          ⚠️ This user will have full admin access including user management.
+        </div>
+        <div class="modal-error-msg" id="changeRoleError"></div>
+      </div>
+      <div class="modal-actions">
+        <div class="modal-action-row">
+          <button class="btn-secondary" id="changeRoleCancelBtn">Cancel</button>
+          <button class="btn-sm-primary" id="changeRoleSaveBtn">Save</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ── Assign Category Modal ─────────────────────────────── -->
+  <div class="modal-overlay" id="assignCategoryModal" role="dialog" aria-modal="true">
+    <div class="modal-box" style="max-width:420px">
+      <div class="modal-header">
+        <h3 class="modal-title" id="assignCategoryTitle">Assign Category</h3>
+        <button class="modal-close" id="assignCategoryModalClose" aria-label="Close">&times;</button>
+      </div>
+      <div class="modal-body">
+        <div class="modal-form-group">
+          <label>Categories</label>
+          <div class="category-checkboxes">
+            <label class="cat-checkbox"><input type="checkbox" value="ERP System"> ERP System</label>
+            <label class="cat-checkbox"><input type="checkbox" value="Academia"> Academia</label>
+            <label class="cat-checkbox"><input type="checkbox" value="Training Module"> Training Module</label>
+            <label class="cat-checkbox"><input type="checkbox" value="Moodle"> Moodle</label>
+            <label class="cat-checkbox"><input type="checkbox" value="IT Support"> IT Support</label>
+          </div>
+          <p class="cat-hint">Leave all unchecked to show all tickets (no restriction).</p>
+        </div>
+        <div class="modal-error-msg" id="assignCategoryError"></div>
+      </div>
+      <div class="modal-actions">
+        <div class="modal-action-row">
+          <button class="btn-secondary" id="assignCategoryCancelBtn">Cancel</button>
+          <button class="btn-sm-primary" id="assignCategorySaveBtn">Save</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ── Toast ──────────────────────────────────────────────── -->
+  <div class="toast" id="toast"></div>
+
+  <script>
+  (function () {
+    'use strict';
+
+    // ── State ─────────────────────────────────────────────────
+    let allTickets = [];
+    let itMembers = [];
+    let currentTicket = null;
+    let allUsers = [];
+    let currentUserId = null;
+    let currentUserRole = null;
+    let currentUserIsManager = false;
+    let currentUserEmail = null;
+    let currentUser = null;
+    let editingUserId = null;
+    let resetUserId = null;
+    let currentLogType = 'auth';
+    let allLogEntries = [];
+    let logsLoaded = false;
+
+    // ── Helpers ───────────────────────────────────────────────
+    function statusBadge(status) {
+      const map = {
+        'Submitted': 'badge-open',
+        'Open': 'badge-open',
+        'In Progress': 'badge-inprogress',
+        'Deferred': 'badge-deferred',
+        'Resolved': 'badge-resolved',
+        'Closed': 'badge-closed'
+      };
+      return `<span class="badge ${map[status] || ''}">${status}</span>`;
+    }
+
+    function priorityBadge(priority) {
+      const map = {
+        'Low': 'badge-low',
+        'Medium': 'badge-medium',
+        'High': 'badge-high',
+        'Critical': 'badge-critical'
+      };
+      return `<span class="badge ${map[priority] || ''}">${priority}</span>`;
+    }
+
+    function approvalBadge(status) {
+      if (!status) return '—';
+      const colors = {
+        'Needs Approval':      { bg: '#e67e22', color: '#fff' },
+        'Pending':             { bg: '#2980b9', color: '#fff' },
+        'Approved':            { bg: '#27ae60', color: '#fff' },
+        'Rejected':            { bg: '#c0392b', color: '#fff' },
+        'Needs Clarification': { bg: '#f39c12', color: '#fff' }
+      };
+      const c = colors[status] || { bg: '#95a5a6', color: '#fff' };
+      return `<span style="background:${c.bg};color:${c.color};padding:2px 7px;border-radius:10px;font-size:0.72rem;font-weight:600;white-space:nowrap;">${escHtml(status)}</span>`;
+    }
+
+    function roleBadge(role) {
+      const map = { 'staff': 'role-badge-staff', 'it': 'role-badge-it', 'admin': 'role-badge-admin' };
+      return `<span class="role-badge ${map[role] || ''}">${role}</span>`;
+    }
+
+    // v1.5.4: feedback emoji mapping for IT ticket list
+    function feedbackEmoji(value) {
+      if (value === 'positive') return '😊';
+      if (value === 'neutral')  return '😐';
+      if (value === 'negative') return '😢';
+      return '<span style="color:#cbd5e1;font-size:1rem;">—</span>';
+    }
+
+    function formatDate(dt) {
+      if (!dt) return '—';
+      const d = new Date(dt.replace(' ', 'T') + 'Z');
+      return d.toLocaleDateString('en-GB', { day: '2-digit', month: 'short', year: 'numeric' });
+    }
+
+    function formatDateTime(dt) {
+      if (!dt) return '—';
+      const d = new Date(dt.replace(' ', 'T') + 'Z');
+      return d.toLocaleString('en-GB', { day: '2-digit', month: 'short', year: 'numeric', hour: '2-digit', minute: '2-digit' });
+    }
+
+    function escHtml(str) {
+      return String(str)
+        .replace(/&/g,'&amp;').replace(/</g,'&lt;')
+        .replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+    }
+
+    // ── Toast ─────────────────────────────────────────────────
+    let toastTimer;
+    function showToast(msg, type = 'success') {
+      const el = document.getElementById('toast');
+      el.textContent = msg;
+      el.className = `toast toast-${type} show`;
+      clearTimeout(toastTimer);
+      toastTimer = setTimeout(() => el.classList.remove('show'), 3500);
+    }
+
+    // ── Auth check + init ─────────────────────────────────────
+    async function init() {
+      try {
+        const r = await fetch('/api/auth/me', { credentials: 'include' });
+        if (!r.ok) { window.location.href = '/index.html'; return; }
+        const data = await r.json();
+        currentUser = data.user;
+        if (currentUser.role === 'staff') { window.location.href = '/staff/dashboard.html'; return; }
+        currentUserId = currentUser.id;
+        currentUserRole = currentUser.role;
+        currentUserIsManager = currentUser.is_it_manager === 1;
+        currentUserEmail = currentUser.email;
+        document.getElementById('welcomeName').textContent =
+          currentUser.full_name + (currentUser.role === 'admin' ? ' (Admin)' : ' (IT)');
+        if (currentUser.role === 'it' && currentUser.it_category) {
+          const cats = JSON.parse(currentUser.it_category);
+          if (cats.length > 0) {
+            const badge = document.createElement('span');
+            badge.className = 'category-filter-badge';
+            badge.textContent = '\uD83D\uDCC2 Showing: ' + cats.join(', ');
+            document.getElementById('welcomeName').insertAdjacentElement('afterend', badge);
+          }
+        }
+      } catch (e) {
+        window.location.href = '/index.html';
+        return;
+      }
+
+      // Show admin tab if admin role
+      if (currentUser.role === 'admin') {
+        const tabBar = document.getElementById('tabBar');
+        tabBar.style.display = 'flex';
+
+        // Tab switching
+        tabBar.querySelectorAll('.tab-btn').forEach(btn => {
+          btn.addEventListener('click', () => {
+            tabBar.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
+            document.querySelectorAll('.tab-content').forEach(c => c.classList.remove('active'));
+            btn.classList.add('active');
+            document.getElementById('tab-' + btn.dataset.tab).classList.add('active');
+            if (btn.dataset.tab === 'logs' && !logsLoaded) loadLogs(currentLogType);
+          });
+        });
+
+        loadUsers();
+        attachUserFilterListeners();
+      }
+
+      // Load ticket data in parallel
+      await Promise.all([loadAllTickets(), loadITMembers()]);
+      attachFilterListeners();
+
+      // Export tickets CSV button
+      document.getElementById('exportTicketsBtn').addEventListener('click', () => {
+        const params = new URLSearchParams();
+        const search = document.getElementById('filterSearch').value.trim();
+        const statuses  = getChecked('dropStatus');
+        const categories = getChecked('dropCategory');
+        const priorities = getChecked('dropPriority');
+        if (statuses.length === 1)    params.set('status', statuses[0]);
+        if (categories.length === 1)  params.set('category', categories[0]);
+        if (priorities.length === 1)  params.set('priority', priorities[0]);
+        if (search) params.set('search', search);
+        window.location.href = '/api/admin/export/tickets?' + params.toString();
+      });
+
+      // Notifications
+      loadNotifications();
+      setInterval(loadNotifications, 30000);
+
+      // Auto-refresh tickets every 3 minutes
+      setInterval(() => { loadAllTickets(); }, 3 * 60 * 1000);
+
+      // Bell toggle
+      document.getElementById('notifBell').addEventListener('click', (e) => {
+        e.stopPropagation();
+        document.getElementById('notifDropdown').classList.toggle('open');
+      });
+      document.addEventListener('click', () => {
+        document.getElementById('notifDropdown').classList.remove('open');
+      });
+      document.getElementById('markAllRead').addEventListener('click', async (e) => {
+        e.stopPropagation();
+        await fetch('/api/notifications/mark-read', {
+          method: 'POST', headers: { 'Content-Type': 'application/json' },
+          credentials: 'include', body: JSON.stringify({ id: 'all' })
+        });
+        loadNotifications();
+      });
+    }
+
+    async function loadNotifications() {
+      try {
+        const r = await fetch('/api/notifications', { credentials: 'include' });
+        const { notifications } = await r.json();
+        const unread = notifications.filter(n => !n.is_read).length;
+        const badge = document.getElementById('notifBadge');
+        badge.textContent = unread;
+        badge.style.display = unread > 0 ? 'inline' : 'none';
+        renderNotifications(notifications);
+      } catch (e) { /* silent */ }
+    }
+
+    function renderNotifications(notifications) {
+      const list = document.getElementById('notifList');
+      if (!notifications.length) {
+        list.innerHTML = '<div style="padding:12px 16px;color:#888;font-size:0.85rem;">No notifications.</div>';
+        return;
+      }
+      list.innerHTML = notifications.slice(0, 20).map(n => `
+        <div class="notif-item ${n.is_read ? '' : 'unread'}" data-id="${n.id}">
+          ${escHtml(n.message)}
+          <span class="notif-time">${formatDateTime(n.created_at)}</span>
+        </div>
+      `).join('');
+      list.querySelectorAll('.notif-item').forEach(item => {
+        item.addEventListener('click', async () => {
+          if (!item.classList.contains('unread')) return;
+          await fetch('/api/notifications/mark-read', {
+            method: 'POST', headers: { 'Content-Type': 'application/json' },
+            credentials: 'include',
+            body: JSON.stringify({ id: parseInt(item.dataset.id) })
+          });
+          loadNotifications();
+        });
+      });
+    }
+
+    // ══════════════════════════════════════════════════════════
+    // TICKETS TAB
+    // ══════════════════════════════════════════════════════════
+
+    async function loadAllTickets() {
+      try {
+        const r = await fetch('/api/tickets/all', { credentials: 'include' });
+        const data = await r.json();
+        allTickets = data.tickets || [];
+        applyFilters();
+      } catch (e) {
+        document.getElementById('ticketsBody').innerHTML =
+          '<tr><td colspan="8" class="table-empty">Failed to load tickets.</td></tr>';
+      }
+    }
+
+    async function loadITMembers() {
+      try {
+        const r = await fetch('/api/admin/it-members', { credentials: 'include' });
+        const data = await r.json();
+        itMembers = data.members || [];
+        const sel = document.getElementById('modalAssignSelect');
+        sel.innerHTML = '<option value="">— Unassigned —</option>' +
+          itMembers.map(m =>
+            `<option value="${m.id}">${escHtml(m.full_name)}${m.role === 'admin' ? ' (Admin)' : ''}</option>`
+          ).join('');
+
+        // Populate Assigned To filter
+        const drop = document.getElementById('dropAssignedTo');
+        itMembers.forEach(m => {
+          const lbl = document.createElement('label');
+          lbl.className = 'multi-opt';
+          lbl.innerHTML = `<input type="checkbox" value="${m.id}"> ${escHtml(m.full_name)}${m.role === 'admin' ? ' (Admin)' : ''}`;
+          drop.appendChild(lbl);
+        });
+        // Re-attach change listeners to all checkboxes in this dropdown
+        document.querySelectorAll('#dropAssignedTo input[type="checkbox"]').forEach(cb => {
+          cb.addEventListener('change', () => {
+            updateMultiBtn('btnAssignedTo', 'dropAssignedTo', 'All Assigned');
+            applyFilters();
+          });
+        });
+      } catch (e) {
+        console.error('Could not load IT members:', e);
+      }
+    }
+
+    function updateStats(tickets) {
+      const count = (status) => tickets.filter(t => t.status === status).length;
+      document.getElementById('statTotal').textContent = tickets.length;
+      document.getElementById('statOpen').textContent = count('Submitted');
+      document.getElementById('statInProgress').textContent = count('In Progress');
+      document.getElementById('statDeferred').textContent = count('Deferred');
+      document.getElementById('statResolved').textContent = count('Resolved');
+    }
+
+    // ── Multi-select helpers ──────────────────────────────────
+    function getChecked(dropId) {
+      return Array.from(
+        document.querySelectorAll(`#${dropId} input[type="checkbox"]:checked`)
+      ).map(cb => cb.value);
+    }
+
+    function updateMultiBtn(btnId, dropId, allLabel) {
+      const checked = getChecked(dropId);
+      const btn = document.getElementById(btnId);
+      if (checked.length === 0) {
+        btn.textContent = allLabel + ' \u25BE';
+        btn.classList.remove('has-selection');
+      } else {
+        btn.textContent = checked.length + ' selected \u25BE';
+        btn.classList.add('has-selection');
+      }
+    }
+
+    function setupMultiSelect(btnId, dropId, allLabel) {
+      const btn = document.getElementById(btnId);
+      const drop = document.getElementById(dropId);
+
+      btn.addEventListener('click', (e) => {
+        e.stopPropagation();
+        // Close all other open dropdowns
+        document.querySelectorAll('.multi-select-dropdown').forEach(d => {
+          if (d.id !== dropId) d.style.display = 'none';
+        });
+        drop.style.display = drop.style.display === 'none' ? 'block' : 'none';
+      });
+
+      drop.querySelectorAll('input[type="checkbox"]').forEach(cb => {
+        cb.addEventListener('change', () => {
+          updateMultiBtn(btnId, dropId, allLabel);
+          applyFilters();
+        });
+      });
+    }
+
+    function attachFilterListeners() {
+      setupMultiSelect('btnStatus',     'dropStatus',     'All Statuses');
+      setupMultiSelect('btnCategory',   'dropCategory',   'All Categories');
+      setupMultiSelect('btnPriority',   'dropPriority',   'All Priorities');
+      setupMultiSelect('btnApproval',   'dropApproval',   'All Tickets');
+      setupMultiSelect('btnAssignedTo', 'dropAssignedTo', 'All Assigned');
+
+      // Close all dropdowns when clicking outside
+      document.addEventListener('click', () => {
+        document.querySelectorAll('.multi-select-dropdown').forEach(d => {
+          d.style.display = 'none';
+        });
+      });
+
+      document.getElementById('filterSearch').addEventListener('input', applyFilters);
+
+      document.getElementById('clearFilters').addEventListener('click', () => {
+        document.querySelectorAll('.multi-select-dropdown input[type="checkbox"]').forEach(cb => {
+          cb.checked = false;
+        });
+        updateMultiBtn('btnStatus',     'dropStatus',     'All Statuses');
+        updateMultiBtn('btnCategory',   'dropCategory',   'All Categories');
+        updateMultiBtn('btnPriority',   'dropPriority',   'All Priorities');
+        updateMultiBtn('btnApproval',   'dropApproval',   'All Tickets');
+        updateMultiBtn('btnAssignedTo', 'dropAssignedTo', 'All Assigned');
+        document.getElementById('filterSearch').value = '';
+        applyFilters();
+      });
+    }
+
+    function applyFilters() {
+      const statuses    = getChecked('dropStatus');
+      const categories  = getChecked('dropCategory');
+      const priorities  = getChecked('dropPriority');
+      const approvals   = getChecked('dropApproval');
+      const assignedTo  = getChecked('dropAssignedTo');
+      const search = document.getElementById('filterSearch').value.toLowerCase().trim();
+
+      const filtered = allTickets.filter(t => {
+        if (statuses.length   && !statuses.includes(t.status))     return false;
+        if (categories.length && !categories.includes(t.category)) return false;
+        if (priorities.length && !priorities.includes(t.priority)) return false;
+
+        if (approvals.length) {
+          const needsApproval = t.approval_status === 'Needs Approval' || t.approval_status === 'Pending';
+          const matchYes = approvals.includes('yes') && needsApproval;
+          const matchNo  = approvals.includes('no')  && !t.approval_status;
+          if (!matchYes && !matchNo) return false;
+        }
+
+        if (assignedTo.length) {
+          const match = assignedTo.some(v => {
+            if (v === 'unassigned') return !t.assigned_to || t.assigned_to === null;
+            return parseInt(v) === parseInt(t.assigned_to || t.assigned_to_id);
+          });
+          if (!match) return false;
+        }
+
+        if (search) {
+          const haystack = `${t.ticket_number || ''} ${t.title}`.toLowerCase();
+          if (!haystack.includes(search)) return false;
+        }
+        return true;
+      });
+
+      updateStats(filtered);
+      renderTickets(filtered);
+    }
+
+    function renderTickets(tickets) {
+      const tbody = document.getElementById('ticketsBody');
+      if (!tickets.length) {
+        tbody.innerHTML = '<tr><td colspan="10" class="table-empty">No tickets match the current filters.</td></tr>';
+        return;
+      }
+      tbody.innerHTML = tickets.map(t => `
+        <tr data-id="${t.id}" class="${t.unread_count > 0 ? 'ticket-row-unread' : ''}">
+          <td class="ticket-number">
+            <span class="ticket-number-link">${escHtml(t.ticket_number || '—')}</span>${t.unread_count > 0 ? `<span class="unread-badge">${t.unread_count}</span>` : ''}
+          </td>
+          <td>${escHtml(t.title)}</td>
+          <td>${escHtml(t.category)}</td>
+          <td>${priorityBadge(t.priority)}</td>
+          <td>${statusBadge(t.status)}</td>
+          <td>${approvalBadge(t.approval_status)}</td>
+          <td style="text-align:center;font-size:1.2rem;" title="${escHtml(t.feedback_comment || '')}">${feedbackEmoji(t.feedback)}</td>
+          <td>${escHtml(t.submitted_by_name || '—')}</td>
+          <td>${escHtml(t.assigned_to_name || '—')}</td>
+          <td>${t.created_formatted || formatDate(t.created_at)}</td>
+        </tr>
+      `).join('');
+
+      tbody.querySelectorAll('tr[data-id]').forEach(row => {
+        row.addEventListener('click', () => openModal(parseInt(row.dataset.id)));
+      });
+    }
+
+    // ── Ticket modal ──────────────────────────────────────────
+    async function openModal(ticketId) {
+      document.getElementById('commentText').value = '';
+      document.getElementById('itCommentAttachments').value = '';
+
+      try {
+        const [ticketRes, updatesRes] = await Promise.all([
+          fetch(`/api/tickets/${ticketId}`, { credentials: 'include' }),
+          fetch(`/api/tickets/${ticketId}/updates-with-attachments`, { credentials: 'include' })
+        ]);
+        if (!ticketRes.ok) { showToast('Could not load ticket.', 'error'); return; }
+        const { ticket } = await ticketRes.json();
+        const updatesData = updatesRes.ok ? await updatesRes.json() : { updates: [] };
+        currentTicket = ticket;
+
+        document.getElementById('modalTicketNumber').textContent = ticket.ticket_number || '';
+        document.getElementById('modalTitle').textContent = ticket.title;
+        document.getElementById('modalStatusSelect').value = ticket.status;
+        document.getElementById('modalPriorityBadge').innerHTML = priorityBadge(ticket.priority);
+        document.getElementById('modalPrioritySelect').value = ticket.priority;
+        document.getElementById('modalCategory').textContent = ticket.category;
+        document.getElementById('modalCategorySelect').value = ticket.category;
+        document.getElementById('modalSubmittedBy').textContent = ticket.submitted_by_name || '—';
+        document.getElementById('modalDate').textContent = ticket.created_formatted || formatDateTime(ticket.created_at);
+        document.getElementById('modalDescription').textContent = ticket.description;
+
+        renderCCSection(ticket);
+        loadAttachments(ticketId);
+
+        // Populate assign dropdown with IT members relevant to this ticket's category
+        const assignSel = document.getElementById('modalAssignSelect');
+        const assignSection = document.getElementById('assignSection');
+        const assignCategoryMsg = document.getElementById('assignCategoryMsg');
+        try {
+          const membersRes = await fetch(
+            `/api/admin/it-members-by-category?category=${encodeURIComponent(ticket.category)}`,
+            { credentials: 'include' }
+          );
+          if (membersRes.ok) {
+            const membersData = await membersRes.json();
+            const members = membersData.members || [];
+            assignSel.innerHTML = '<option value="">— Unassigned —</option>';
+            if (members && members.length > 0) {
+              members.forEach(m => {
+                assignSel.innerHTML += `<option value="${m.id}">${escHtml(m.full_name)}${m.role === 'admin' ? ' (Admin)' : ''}</option>`;
+              });
+            }
+          }
+        } catch (e) { /* leave dropdown as-is */ }
+        assignSel.value = ticket.assigned_to ? String(ticket.assigned_to) : '';
+
+        // If IT role (not admin), check if this ticket is in their category
+        if (currentUserRole === 'it') {
+          let myItCats = [];
+          if (currentUser && currentUser.it_category) {
+            try {
+              myItCats = Array.isArray(currentUser.it_category) ? currentUser.it_category : JSON.parse(currentUser.it_category);
+              if (!Array.isArray(myItCats)) myItCats = [myItCats];
+            } catch (e) { myItCats = []; }
+          }
+          const inMyCategory = myItCats.length === 0 || myItCats.includes(ticket.category);
+          if (!inMyCategory) {
+            assignSel.style.display = 'none';
+            assignCategoryMsg.style.display = 'block';
+            assignCategoryMsg.textContent = 'This ticket is outside your assigned category.';
+          } else {
+            assignSel.style.display = '';
+            assignCategoryMsg.style.display = 'none';
+          }
+        } else {
+          assignSel.style.display = '';
+          assignCategoryMsg.style.display = 'none';
+        }
+
+        renderUpdates(updatesData.updates || []);
+
+        // Restrict comment/status controls for non-assigned IT users
+        const isAssigned = ticket.assigned_to === currentUserId;
+        let itUserInCategory = false;
+        if (currentUserRole === 'it') {
+          let myItCats = [];
+          try {
+            if (currentUser && currentUser.it_category) {
+              myItCats = Array.isArray(currentUser.it_category)
+                ? currentUser.it_category
+                : JSON.parse(currentUser.it_category);
+            }
+          } catch (e) { myItCats = []; }
+          itUserInCategory = myItCats.length === 0 || myItCats.includes(ticket.category);
+        }
+        const canEdit = currentUserRole === 'admin' ||
+                        isAssigned ||
+                        (currentUserRole === 'it' && itUserInCategory && !ticket.assigned_to);
+        const commentArea = document.getElementById('commentText');
+        const addCommentBtn = document.getElementById('addCommentBtn');
+        const saveChangesBtn = document.getElementById('saveChangesBtn');
+        const statusSelect = document.getElementById('modalStatusSelect');
+        const priorityBadgeEl = document.getElementById('modalPriorityBadge');
+        const prioritySelectEl = document.getElementById('modalPrioritySelect');
+        const commentAttachInput = document.getElementById('itCommentAttachments');
+
+        let disabledMsg = document.getElementById('commentDisabledMsg');
+        if (!disabledMsg) {
+          disabledMsg = document.createElement('div');
+          disabledMsg.id = 'commentDisabledMsg';
+          disabledMsg.className = 'comment-disabled-msg';
+          commentArea.insertAdjacentElement('beforebegin', disabledMsg);
+        }
+
+        if (canEdit) {
+          commentArea.disabled = false;
+          commentArea.style.display = '';
+          commentAttachInput.style.display = '';
+          addCommentBtn.disabled = false;
+          saveChangesBtn.disabled = false;
+          statusSelect.disabled = false;
+          priorityBadgeEl.style.display = 'none';
+          prioritySelectEl.style.display = '';
+          document.getElementById('modalCategory').style.display = 'none';
+          document.getElementById('modalCategorySelect').style.display = '';
+          disabledMsg.style.display = 'none';
+        } else {
+          commentArea.disabled = true;
+          commentArea.style.display = 'none';
+          commentAttachInput.style.display = 'none';
+          addCommentBtn.disabled = true;
+          saveChangesBtn.disabled = true;
+          statusSelect.disabled = true;
+          priorityBadgeEl.style.display = '';
+          prioritySelectEl.style.display = 'none';
+          document.getElementById('modalCategory').style.display = '';
+          document.getElementById('modalCategorySelect').style.display = 'none';
+          disabledMsg.style.display = 'block';
+          disabledMsg.textContent = 'Only the assigned IT member can comment or update this ticket.';
+        }
+
+        // ── Approval UI ──────────────────────────────────────
+        const approvalStatusSection = document.getElementById('approvalStatusSection');
+        const approvalSection = document.getElementById('approvalSection');
+        const managerApprovalPanel = document.getElementById('managerApprovalPanel');
+        const approvalStatusBadge = document.getElementById('approvalStatusBadge');
+        const approvalNoteText = document.getElementById('approvalNoteText');
+
+        // Show approval status badge if set
+        if (ticket.approval_status) {
+          approvalStatusSection.style.display = 'block';
+          const cls = 'approval-' + ticket.approval_status.replace(/ /g, '-');
+          approvalStatusBadge.className = 'approval-badge ' + cls;
+          approvalStatusBadge.textContent = ticket.approval_status;
+          approvalNoteText.textContent = ticket.approval_note || '';
+        } else {
+          approvalStatusSection.style.display = 'none';
+        }
+
+        // Show request approval button:
+        // - Assigned IT member with no approval yet, or after 'Needs Clarification'
+        // - Admin always (no assignment restriction)
+        if ((currentUserRole === 'admin' || (isAssigned && currentUserRole === 'it')) &&
+            (!ticket.approval_status || ticket.approval_status === 'Needs Clarification')) {
+          approvalSection.style.display = 'block';
+          const reqBtn = document.getElementById('requestApprovalBtn');
+          if (reqBtn) {
+            reqBtn.textContent = (currentUserRole === 'it' && ticket.approval_status === 'Needs Clarification')
+              ? '🔄 Resubmit for Approval'
+              : '🔔 Request IT Manager Approval';
+          }
+        } else {
+          approvalSection.style.display = 'none';
+        }
+
+        // Show manager panel: IT manager, and ticket needs approval
+        if (currentUserIsManager &&
+            (ticket.approval_status === 'Needs Approval' || ticket.approval_status === 'Pending')) {
+          managerApprovalPanel.style.display = 'block';
+          document.getElementById('approvalDecision').value = 'Approved';
+          document.getElementById('approvalNote').value = '';
+        } else {
+          managerApprovalPanel.style.display = 'none';
+        }
+
+        document.getElementById('ticketModal').classList.add('open');
+
+        // Mark ticket as read and clear unread badge
+        fetch(`/api/tickets/${ticketId}/mark-read`, { method: 'POST', credentials: 'include' }).catch(() => {});
+        const row = document.querySelector(`tr[data-id="${ticketId}"]`);
+        if (row) {
+          row.classList.remove('ticket-row-unread');
+          const badge = row.querySelector('.unread-badge');
+          if (badge) badge.remove();
+        }
+      } catch (e) {
+        console.error('MODAL ERROR:', e.message, e.stack);
+        showToast('Failed to load ticket details: ' + e.message, 'error');
+      }
+    }
+
+    async function loadUpdates(ticketId) {
+      try {
+        const r = await fetch(`/api/tickets/${ticketId}/updates-with-attachments`, { credentials: 'include' });
+        if (!r.ok) return;
+        const { updates } = await r.json();
+        renderUpdates(updates || []);
+      } catch (e) { /* silent */ }
+    }
+
+    // ── CC section ────────────────────────────────────────────
+    function renderCCSection(ticket) {
+      const display = document.getElementById('ccDisplay');
+      const editBtn = document.getElementById('editCcBtn');
+      const editForm = document.getElementById('ccEditForm');
+
+      editForm.style.display = 'none';
+      document.getElementById('ccEditError').style.display = 'none';
+
+      const ccs = [ticket.cc_email1, ticket.cc_email2].filter(Boolean);
+      display.innerHTML = ccs.length
+        ? ccs.map(e => `<span style="display:inline-block;padding:3px 8px;margin:2px 4px 2px 0;background:#e6f0fa;color:#1a3a5c;border-radius:12px;font-size:0.82rem;">${escHtml(e)}</span>`).join('')
+        : '<em style="color:#6c7a89;">No CC recipients yet.</em>';
+
+      // Editable for: admin, or assigned IT member
+      const canManageCC = currentUserRole === 'admin' ||
+                          (currentUserRole === 'it' && ticket.assigned_to === currentUserId);
+      editBtn.style.display = canManageCC ? 'inline-block' : 'none';
+    }
+
+    document.getElementById('editCcBtn').addEventListener('click', () => {
+      if (!currentTicket) return;
+      document.getElementById('ccEdit1').value = currentTicket.cc_email1 || '';
+      document.getElementById('ccEdit2').value = currentTicket.cc_email2 || '';
+      document.getElementById('ccEditError').style.display = 'none';
+      document.getElementById('ccEditForm').style.display = 'block';
+    });
+
+    document.getElementById('cancelCcBtn').addEventListener('click', () => {
+      document.getElementById('ccEditForm').style.display = 'none';
+    });
+
+    document.getElementById('saveCcBtn').addEventListener('click', async () => {
+      if (!currentTicket || !currentTicket.id) return;
+      const ticketId = currentTicket.id;
+      const cc1 = document.getElementById('ccEdit1').value.trim();
+      const cc2 = document.getElementById('ccEdit2').value.trim();
+      const errEl = document.getElementById('ccEditError');
+      const saveBtn = document.getElementById('saveCcBtn');
+      errEl.style.display = 'none';
+
+      saveBtn.disabled = true;
+      saveBtn.textContent = 'Saving…';
+      try {
+        const r = await fetch(`/api/tickets/${ticketId}/update-cc`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          credentials: 'include',
+          body: JSON.stringify({ cc_email1: cc1, cc_email2: cc2 })
+        });
+        const data = await r.json();
+        if (!r.ok) {
+          errEl.textContent = data.error || 'Failed to save.';
+          errEl.style.display = 'block';
+          return;
+        }
+        currentTicket.cc_email1 = data.cc_email1;
+        currentTicket.cc_email2 = data.cc_email2;
+        renderCCSection(currentTicket);
+        showToast('CC list updated.', 'success');
+        // Refresh updates list so the log entry shows
+        try {
+          const ur = await fetch(`/api/tickets/${ticketId}/updates-with-attachments`, { credentials: 'include' });
+          if (ur.ok) {
+            const { updates } = await ur.json();
+            renderUpdates(updates || []);
+          }
+        } catch (e) { /* silent */ }
+      } catch (e) {
+        errEl.textContent = 'Connection error.';
+        errEl.style.display = 'block';
+      } finally {
+        saveBtn.disabled = false;
+        saveBtn.textContent = 'Save CC';
+      }
+    });
+
+    async function loadAttachments(ticketId) {
+      try {
+        const r = await fetch(`/api/tickets/${ticketId}/attachments`, { credentials: 'include' });
+        if (!r.ok) return;
+        const { attachments } = await r.json();
+        const section = document.getElementById('attachmentsSection');
+        const list = document.getElementById('attachmentsList');
+        if (!attachments || !attachments.length) { section.style.display = 'none'; return; }
+        section.style.display = 'block';
+        list.innerHTML = attachments.map(a =>
+          `<a href="${a.url}" download="${escHtml(a.original_name)}" class="attachment-item">
+            📎 ${escHtml(a.original_name)} (${Math.round(a.size / 1024)}KB)
+          </a>`
+        ).join('');
+      } catch (e) { /* silent */ }
+    }
+
+    function renderUpdates(updates) {
+      const list = document.getElementById('updatesList');
+      if (!updates || !updates.length) {
+        list.innerHTML = '<p class="updates-empty">No updates yet.</p>';
+        return;
+      }
+      list.innerHTML = updates.map(u => `
+        <div class="update-item">
+          <div class="update-meta">
+            <span class="update-author">${escHtml(u.author_name)}</span>
+            <span class="update-time">${formatDateTime(u.created_at)}</span>
+          </div>
+          <p class="update-message">${escHtml(u.message)}</p>
+          ${u.attachments && u.attachments.length > 0 ? `
+            <div class="comment-attachments">
+              ${u.attachments.map(a => `<a href="${a.url}" download="${escHtml(a.original_name)}" class="comment-attachment-link">&#128206; ${escHtml(a.original_name)}</a>`).join('')}
+            </div>` : ''}
+        </div>
+      `).join('');
+      list.scrollTop = list.scrollHeight;
+    }
+
+    function closeTicketModal() {
+      document.getElementById('ticketModal').classList.remove('open');
+      currentTicket = null;
+    }
+
+    document.getElementById('modalClose').addEventListener('click', closeTicketModal);
+    document.getElementById('modalCloseBtn').addEventListener('click', closeTicketModal);
+    document.getElementById('ticketModal').addEventListener('click', (e) => {
+      if (e.target === e.currentTarget) closeTicketModal();
+    });
+
+    // Save Changes (assign + status + priority)
+    document.getElementById('saveChangesBtn').addEventListener('click', async () => {
+      if (!currentTicket) return;
+      const btn = document.getElementById('saveChangesBtn');
+      btn.disabled = true;
+      btn.textContent = 'Saving…';
+
+      const newStatus = document.getElementById('modalStatusSelect').value;
+      const newAssignId = document.getElementById('modalAssignSelect').value;
+      const newPriority = document.getElementById('modalPrioritySelect').value;
+      const newCategory = document.getElementById('modalCategorySelect').value;
+      const comment = document.getElementById('commentText').value.trim();
+
+      try {
+        let changed = false;
+
+        const oldAssign = currentTicket.assigned_to ? String(currentTicket.assigned_to) : '';
+        if (newAssignId !== oldAssign) {
+          const r = await fetch(`/api/tickets/${currentTicket.id}/assign`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            credentials: 'include',
+            body: JSON.stringify({ assigned_to: newAssignId ? parseInt(newAssignId) : null })
+          });
+          if (!r.ok) {
+            const d = await r.json();
+            showToast(d.error || 'Failed to assign ticket.', 'error');
+            return;
+          }
+          changed = true;
+        }
+
+        if (newStatus !== currentTicket.status || comment || newPriority !== currentTicket.priority || newCategory !== currentTicket.category) {
+          const formData = new FormData();
+          formData.append('message', comment || `Status changed to ${newStatus}.`);
+          if (newStatus !== currentTicket.status) formData.append('status', newStatus);
+          if (newPriority !== currentTicket.priority) formData.append('priority', newPriority);
+          if (newCategory !== currentTicket.category) formData.append('category', newCategory);
+          const r = await fetch(`/api/tickets/${currentTicket.id}/update`, {
+            method: 'POST',
+            credentials: 'include',
+            body: formData
+          });
+          if (!r.ok) {
+            const d = await r.json();
+            showToast(d.error || 'Failed to update ticket.', 'error');
+            return;
+          }
+          changed = true;
+        }
+
+        document.getElementById('commentText').value = '';
+        showToast(changed ? 'Ticket updated.' : 'No changes to save.', 'success');
+
+        await loadAllTickets();
+        if (currentTicket) {
+          const r = await fetch(`/api/tickets/${currentTicket.id}`, { credentials: 'include' });
+          const { ticket } = await r.json();
+          currentTicket = ticket;
+          document.getElementById('modalStatusSelect').value = ticket.status;
+          document.getElementById('modalAssignSelect').value = ticket.assigned_to ? String(ticket.assigned_to) : '';
+          document.getElementById('modalPrioritySelect').value = ticket.priority;
+          document.getElementById('modalPriorityBadge').innerHTML = priorityBadge(ticket.priority);
+          document.getElementById('modalCategorySelect').value = ticket.category;
+          document.getElementById('modalCategory').textContent = ticket.category;
+          await loadUpdates(currentTicket.id);
+        }
+      } catch (e) {
+        showToast('Connection error.', 'error');
+      } finally {
+        btn.disabled = false;
+        btn.textContent = 'Save Changes';
+      }
+    });
+
+    // Add Comment only
+    document.getElementById('addCommentBtn').addEventListener('click', async () => {
+      if (!currentTicket) return;
+      const message = document.getElementById('commentText').value.trim();
+      if (!message) { showToast('Please enter a comment.', 'error'); return; }
+
+      const btn = document.getElementById('addCommentBtn');
+      btn.disabled = true;
+      btn.textContent = 'Posting…';
+
+      try {
+        const formData = new FormData();
+        formData.append('message', message);
+        const files = document.getElementById('itCommentAttachments').files;
+        Array.from(files).forEach(f => formData.append('attachments', f));
+
+        const r = await fetch(`/api/tickets/${currentTicket.id}/update`, {
+          method: 'POST',
+          credentials: 'include',
+          body: formData
+        });
+        const data = await r.json();
+        if (!r.ok) { showToast(data.error || 'Failed to post comment.', 'error'); return; }
+
+        document.getElementById('commentText').value = '';
+        document.getElementById('itCommentAttachments').value = '';
+        await loadUpdates(currentTicket.id);
+        showToast('Comment added.', 'success');
+        loadAllTickets();
+      } catch (e) {
+        showToast('Connection error.', 'error');
+      } finally {
+        btn.disabled = false;
+        btn.textContent = 'Add Comment';
+      }
+    });
+
+    // ── Request IT Manager Approval ───────────────────────────
+    document.getElementById('requestApprovalBtn').addEventListener('click', async () => {
+      if (!currentTicket) return;
+      const btn = document.getElementById('requestApprovalBtn');
+      btn.disabled = true;
+      btn.textContent = 'Requesting…';
+      try {
+        const r = await fetch(`/api/tickets/${currentTicket.id}/request-approval`, {
+          method: 'POST', credentials: 'include'
+        });
+        const data = await r.json();
+        if (!r.ok) { showToast(data.error || 'Failed to request approval.', 'error'); return; }
+        showToast('Approval request sent to IT Manager.', 'success');
+        // Reload ticket to reflect new approval_status
+        const tr = await fetch(`/api/tickets/${currentTicket.id}`, { credentials: 'include' });
+        const { ticket } = await tr.json();
+        currentTicket = ticket;
+        const cls = 'approval-' + ticket.approval_status.replace(/ /g, '-');
+        document.getElementById('approvalStatusBadge').className = 'approval-badge ' + cls;
+        document.getElementById('approvalStatusBadge').textContent = ticket.approval_status;
+        document.getElementById('approvalStatusSection').style.display = 'block';
+        document.getElementById('approvalSection').style.display = 'none';
+      } catch (e) {
+        showToast('Connection error.', 'error');
+      } finally {
+        btn.disabled = false;
+        btn.textContent = '🔔 Request IT Manager Approval';
+      }
+    });
+
+    // ── IT Manager Submit Decision ────────────────────────────
+    document.getElementById('submitApprovalBtn').addEventListener('click', async () => {
+      if (!currentTicket) return;
+      const decision = document.getElementById('approvalDecision').value;
+      const note = document.getElementById('approvalNote').value.trim();
+      const btn = document.getElementById('submitApprovalBtn');
+      btn.disabled = true;
+      btn.textContent = 'Submitting…';
+      try {
+        const r = await fetch(`/api/tickets/${currentTicket.id}/approve`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          credentials: 'include',
+          body: JSON.stringify({ decision, note })
+        });
+        const data = await r.json();
+        if (!r.ok) { showToast(data.error || 'Failed to submit decision.', 'error'); return; }
+        showToast(`Decision "${decision}" submitted.`, 'success');
+        document.getElementById('managerApprovalPanel').style.display = 'none';
+        const cls = 'approval-' + decision.replace(/ /g, '-');
+        document.getElementById('approvalStatusBadge').className = 'approval-badge ' + cls;
+        document.getElementById('approvalStatusBadge').textContent = decision;
+        document.getElementById('approvalNoteText').textContent = note;
+        document.getElementById('approvalStatusSection').style.display = 'block';
+        await loadAllTickets();
+        await loadUpdates(currentTicket.id);
+      } catch (e) {
+        showToast('Connection error.', 'error');
+      } finally {
+        btn.disabled = false;
+        btn.textContent = 'Submit Decision';
+      }
+    });
+
+    // ══════════════════════════════════════════════════════════
+    // ADMIN PANEL TAB
+    // ══════════════════════════════════════════════════════════
+
+    async function loadUsers() {
+      try {
+        const r = await fetch('/api/admin/users', { credentials: 'include' });
+        const data = await r.json();
+        allUsers = data.users || [];
+        // Populate department filter from unique departments
+        const depts = [...new Set(allUsers.map(u => u.department).filter(Boolean))].sort();
+        const deptSel = document.getElementById('filterDept');
+        deptSel.innerHTML = '<option value="">All Departments</option>' +
+          depts.map(d => `<option value="${escHtml(d)}">${escHtml(d)}</option>`).join('');
+        try {
+          applyUserFilters();
+          updateAdminStats(allUsers);
+        } catch (e) {
+          console.error('Render error:', e);
+          document.getElementById('usersBody').innerHTML =
+            '<tr><td colspan="8" style="text-align:center;color:red">' + e.message + '</td></tr>';
+        }
+      } catch (e) {
+        document.getElementById('usersBody').innerHTML =
+          '<tr><td colspan="8" class="table-empty">Failed to load users.</td></tr>';
+      }
+    }
+
+    function applyUserFilters() {
+      const search = document.getElementById('userSearch').value.toLowerCase().trim();
+      const role = document.getElementById('filterRole').value;
+      const dept = document.getElementById('filterDept').value;
+      const category = document.getElementById('filterCategoryUser').value;
+      const status = document.getElementById('filterUserStatus').value;
+
+      const filtered = allUsers.filter(u => {
+        if (search) {
+          const hay = `${u.full_name} ${u.email}`.toLowerCase();
+          if (!hay.includes(search)) return false;
+        }
+        if (role && u.role !== role) return false;
+        if (dept && u.department !== dept) return false;
+        if (category) {
+          let cats = [];
+          if (Array.isArray(u.it_category)) cats = u.it_category;
+          else { try { cats = JSON.parse(u.it_category || '[]'); } catch (e) { cats = []; } }
+          if (!cats.includes(category)) return false;
+        }
+        if (status !== '') {
+          if (u.is_active !== parseInt(status)) return false;
+        }
+        return true;
+      });
+      renderUsers(filtered);
+    }
+
+    // Wire up user filter controls (attached once after init)
+    function attachUserFilterListeners() {
+      ['userSearch', 'filterRole', 'filterDept', 'filterCategoryUser', 'filterUserStatus'].forEach(id => {
+        document.getElementById(id).addEventListener('input', applyUserFilters);
+      });
+      document.getElementById('clearUserFilters').addEventListener('click', () => {
+        document.getElementById('userSearch').value = '';
+        document.getElementById('filterRole').value = '';
+        document.getElementById('filterDept').value = '';
+        document.getElementById('filterCategoryUser').value = '';
+        document.getElementById('filterUserStatus').value = '';
+        applyUserFilters();
+      });
+      document.getElementById('exportUsersBtn').addEventListener('click', () => {
+        const params = new URLSearchParams();
+        const search = document.getElementById('userSearch').value.trim();
+        const role = document.getElementById('filterRole').value;
+        const dept = document.getElementById('filterDept').value;
+        const category = document.getElementById('filterCategoryUser').value;
+        const status = document.getElementById('filterUserStatus').value;
+        if (search)   params.set('search', search);
+        if (role)     params.set('role', role);
+        if (dept)     params.set('department', dept);
+        if (category) params.set('category', category);
+        if (status !== '') params.set('status', status);
+        window.location.href = '/api/admin/users/export?' + params.toString();
+      });
+    }
+
+    function updateAdminStats(users) {
+      document.getElementById('auStatTotal').textContent = users.length;
+      document.getElementById('auStatStaff').textContent = users.filter(u => u.role === 'staff').length;
+      document.getElementById('auStatIT').textContent = users.filter(u => u.role === 'it' || u.role === 'admin').length;
+      document.getElementById('auStatActive').textContent = users.filter(u => u.is_active).length;
+      document.getElementById('auStatInactive').textContent = users.filter(u => !u.is_active).length;
+    }
+
+    function renderUsers(users) {
+      const tbody = document.getElementById('usersBody');
+      if (!users.length) {
+        tbody.innerHTML = '<tr><td colspan="8" class="table-empty">No users found.</td></tr>';
+        return;
+      }
+      tbody.innerHTML = users.map(u => {
+        const isOwn = u.id === currentUserId;
+        const activeBtnClass = u.is_active ? 'btn-action btn-action-deactivate' : 'btn-action btn-action-activate';
+        const activeBtnText = u.is_active ? 'Deactivate' : 'Activate';
+        const disabledAttr = isOwn ? 'disabled title="Cannot deactivate your own account"' : '';
+        const roleBtn = u.id === 1
+          ? ''
+          : isOwn
+            ? `<button class="btn-action btn-action-role" data-uid="${u.id}" data-action="change-role" disabled title="Cannot change your own role">Change Role</button>`
+            : `<button class="btn-action btn-action-role" data-uid="${u.id}" data-action="change-role">Change Role</button>`;
+        const deleteBtn = (u.id === 1 || isOwn)
+          ? ''
+          : `<button class="btn-action btn-action-delete" data-uid="${u.id}" data-action="delete">Delete</button>`;
+        const managerBtn = (u.role === 'it' || u.role === 'admin') && !isOwn && currentUserEmail === 'admin@ltuc.com'
+          ? `<button class="btn-action btn-action-manager" data-uid="${u.id}" data-action="toggle-manager">${u.is_it_manager ? 'Remove Manager' : 'Set as IT Manager'}</button>`
+          : '';
+        const crownBadge = u.is_it_manager ? '<span class="crown-badge">👑</span>' : '';
+        let itCats = [];
+        if ((u.role === 'it' || u.role === 'admin') && u.it_category) {
+          if (Array.isArray(u.it_category)) {
+            itCats = u.it_category;
+          } else {
+            try { itCats = JSON.parse(u.it_category); if (!Array.isArray(itCats)) itCats = [itCats]; } catch (e) { itCats = []; }
+          }
+        }
+        let categoryBadges = '';
+        if (u.role === 'it' || u.role === 'admin') {
+          if (itCats.length === 0) {
+            categoryBadges = '<span class="category-assign-badge unassigned">All</span>';
+          } else {
+            const visible = itCats.slice(0, 2).map(c => `<span class="category-mini-badge">${escHtml(c)}</span>`).join('');
+            const more = itCats.length > 2 ? `<span class="category-more-badge">+${itCats.length - 2} more</span>` : '';
+            categoryBadges = visible + more;
+          }
+        }
+        const categoryCell = (u.role === 'it' || u.role === 'admin')
+          ? `<div class="category-cell">${categoryBadges}</div>
+             <button class="btn-action" style="margin-top:4px;font-size:0.75rem;" data-uid="${u.id}" data-action="assign-category">Assign</button>`
+          : '<span style="color:#bbb;font-size:0.85rem;">—</span>';
+        return `
+          <tr>
+            <td>${escHtml(u.full_name)}${crownBadge}</td>
+            <td>${escHtml(u.email)}</td>
+            <td>${roleBadge(u.role)}</td>
+            <td>${escHtml(u.department || '—')}</td>
+            <td>${categoryCell}</td>
+            <td><span class="${u.is_active ? 'status-badge-active' : 'status-badge-inactive'}">${u.is_active ? 'Active' : 'Inactive'}</span></td>
+            <td>${formatDate(u.created_at)}</td>
+            <td class="actions-cell">
+              <button class="btn-action btn-action-edit" data-uid="${u.id}" data-action="edit">Edit</button>
+              <button class="btn-action btn-action-reset" data-uid="${u.id}" data-action="reset">Reset Password</button>
+              <button class="${activeBtnClass}" data-uid="${u.id}" data-action="toggle" ${disabledAttr}>${activeBtnText}</button>
+              ${roleBtn}
+              ${managerBtn}
+              ${deleteBtn}
+            </td>
+          </tr>
+        `;
+      }).join('');
+
+      tbody.querySelectorAll('[data-action]').forEach(btn => {
+        btn.addEventListener('click', () => {
+          const uid = parseInt(btn.dataset.uid);
+          const user = allUsers.find(u => u.id === uid);
+          if (!user) return;
+          const action = btn.dataset.action;
+          if (action === 'edit') openEditModal(user);
+          else if (action === 'reset') openResetPwModal(uid);
+          else if (action === 'toggle') handleToggleStatus(uid, btn);
+          else if (action === 'change-role') openChangeRoleModal(user);
+          else if (action === 'assign-category') openAssignCategoryModal(user);
+          else if (action === 'toggle-manager') handleToggleManager(uid, btn);
+          else if (action === 'delete') handleDeleteUser(user, btn);
+        });
+      });
+    }
+
+    async function handleToggleStatus(userId, btn) {
+      btn.disabled = true;
+      try {
+        const r = await fetch(`/api/admin/users/${userId}/toggle-status`, {
+          method: 'POST', credentials: 'include'
+        });
+        const data = await r.json();
+        if (!r.ok) { showToast(data.error || 'Failed to toggle status.', 'error'); return; }
+        showToast(`User ${data.is_active ? 'activated' : 'deactivated'}.`, 'success');
+        await loadUsers();
+      } catch (e) {
+        showToast('Connection error.', 'error');
+        btn.disabled = false;
+      }
+    }
+
+    async function handleDeleteUser(user, btn) {
+      if (!confirm(`Are you sure you want to permanently delete ${user.full_name}? This cannot be undone.`)) return;
+      btn.disabled = true;
+      try {
+        const r = await fetch(`/api/admin/users/${user.id}`, {
+          method: 'DELETE',
+          credentials: 'include'
+        });
+        const data = await r.json();
+        if (!r.ok) { showToast(data.error || 'Failed to delete user.', 'error'); return; }
+        showToast('User deleted successfully.', 'success');
+        await loadUsers();
+      } catch (e) {
+        showToast('Connection error.', 'error');
+        btn.disabled = false;
+      }
+    }
+
+    async function handleToggleManager(userId, btn) {
+      btn.disabled = true;
+      try {
+        const r = await fetch(`/api/admin/users/${userId}/toggle-manager`, {
+          method: 'POST', credentials: 'include'
+        });
+        const data = await r.json();
+        if (!r.ok) { showToast(data.error || 'Failed to update manager.', 'error'); return; }
+        showToast('IT Manager updated successfully.', 'success');
+        await loadUsers();
+      } catch (e) {
+        showToast('Connection error.', 'error');
+        btn.disabled = false;
+      }
+    }
+
+    // ── Add User Form ─────────────────────────────────────────
+    document.getElementById('toggleAddUser').addEventListener('click', () => {
+      const form = document.getElementById('addUserForm');
+      const btn = document.getElementById('toggleAddUser');
+      form.classList.toggle('open');
+      btn.textContent = form.classList.contains('open') ? '− Close Form' : '+ Add New User';
+    });
+
+    document.getElementById('addUserBtn').addEventListener('click', async () => {
+      const full_name = document.getElementById('auFullName').value.trim();
+      const email = document.getElementById('auEmail').value.trim();
+      const password = document.getElementById('auPassword').value.trim();
+      const role = document.getElementById('auRole').value;
+      const department = document.getElementById('auDepartment').value.trim();
+      const msgEl = document.getElementById('addUserMsg');
+      msgEl.className = 'add-user-inline-msg';
+      msgEl.textContent = '';
+
+      if (!full_name || !email || !password || !role || !department) {
+        msgEl.className = 'add-user-inline-msg error';
+        msgEl.textContent = 'All fields are required.';
+        return;
+      }
+      if (!email.toLowerCase().endsWith('@ltuc.edu.jo')) {
+        msgEl.className = 'add-user-inline-msg error';
+        msgEl.textContent = 'Email must end with @ltuc.edu.jo.';
+        return;
+      }
+
+      const btn = document.getElementById('addUserBtn');
+      btn.disabled = true;
+      btn.textContent = 'Adding…';
+
+      try {
+        const r = await fetch('/api/admin/users/add', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          credentials: 'include',
+          body: JSON.stringify({ full_name, email, password, role, department })
+        });
+        const data = await r.json();
+        if (!r.ok) {
+          msgEl.className = 'add-user-inline-msg error';
+          msgEl.textContent = data.error || 'Failed to add user.';
+          return;
+        }
+        ['auFullName', 'auEmail', 'auPassword', 'auDepartment'].forEach(id => {
+          document.getElementById(id).value = '';
+        });
+        document.getElementById('auRole').value = '';
+        document.getElementById('addUserForm').classList.remove('open');
+        document.getElementById('toggleAddUser').textContent = '+ Add New User';
+        msgEl.className = 'add-user-inline-msg success';
+        msgEl.textContent = `User ${data.user.full_name} added successfully.`;
+        setTimeout(() => { msgEl.textContent = ''; }, 4000);
+        showToast(`User ${data.user.full_name} added.`, 'success');
+        await loadUsers();
+      } catch (e) {
+        msgEl.className = 'add-user-inline-msg error';
+        msgEl.textContent = 'Connection error.';
+      } finally {
+        btn.disabled = false;
+        btn.textContent = 'Add User';
+      }
+    });
+
+    // ── Edit User Modal ───────────────────────────────────────
+    function openEditModal(user) {
+      editingUserId = user.id;
+      document.getElementById('editFullName').value = user.full_name;
+      document.getElementById('editEmail').value = user.email;
+      document.getElementById('editDepartment').value = user.department || '';
+      document.getElementById('editUserError').textContent = '';
+      document.getElementById('editUserModal').classList.add('open');
+    }
+
+    function closeEditModal() {
+      document.getElementById('editUserModal').classList.remove('open');
+      editingUserId = null;
+    }
+
+    document.getElementById('editUserModalClose').addEventListener('click', closeEditModal);
+    document.getElementById('editUserCancelBtn').addEventListener('click', closeEditModal);
+    document.getElementById('editUserModal').addEventListener('click', (e) => {
+      if (e.target === e.currentTarget) closeEditModal();
+    });
+
+    document.getElementById('editUserSaveBtn').addEventListener('click', async () => {
+      const full_name = document.getElementById('editFullName').value.trim();
+      const email = document.getElementById('editEmail').value.trim();
+      const department = document.getElementById('editDepartment').value.trim();
+      const errEl = document.getElementById('editUserError');
+      errEl.textContent = '';
+
+      if (!full_name || !email) { errEl.textContent = 'Full name and email are required.'; return; }
+      if (!email.toLowerCase().endsWith('@ltuc.edu.jo')) {
+        errEl.textContent = 'Email must end with @ltuc.edu.jo.';
+        return;
+      }
+
+      const btn = document.getElementById('editUserSaveBtn');
+      btn.disabled = true;
+      btn.textContent = 'Saving…';
+
+      try {
+        const r = await fetch(`/api/admin/users/${editingUserId}`, {
+          method: 'PUT',
+          headers: { 'Content-Type': 'application/json' },
+          credentials: 'include',
+          body: JSON.stringify({ full_name, email, department })
+        });
+        const data = await r.json();
+        if (!r.ok) { errEl.textContent = data.error || 'Failed to update user.'; return; }
+        closeEditModal();
+        showToast('User updated.', 'success');
+        await loadUsers();
+      } catch (e) {
+        errEl.textContent = 'Connection error.';
+      } finally {
+        btn.disabled = false;
+        btn.textContent = 'Save Changes';
+      }
+    });
+
+    // ── Reset Password Modal ──────────────────────────────────
+    function openResetPwModal(userId) {
+      resetUserId = userId;
+      document.getElementById('resetPwInput').value = '';
+      document.getElementById('resetPwError').textContent = '';
+      document.getElementById('resetPwModal').classList.add('open');
+    }
+
+    function closeResetPwModal() {
+      document.getElementById('resetPwModal').classList.remove('open');
+      resetUserId = null;
+    }
+
+    document.getElementById('resetPwModalClose').addEventListener('click', closeResetPwModal);
+    document.getElementById('resetPwCancelBtn').addEventListener('click', closeResetPwModal);
+    document.getElementById('resetPwModal').addEventListener('click', (e) => {
+      if (e.target === e.currentTarget) closeResetPwModal();
+    });
+
+    document.getElementById('resetPwSaveBtn').addEventListener('click', async () => {
+      const new_password = document.getElementById('resetPwInput').value.trim();
+      const errEl = document.getElementById('resetPwError');
+      errEl.textContent = '';
+
+      if (!new_password || new_password.length < 8) {
+        errEl.textContent = 'Password must be at least 8 characters.';
+        return;
+      }
+
+      const btn = document.getElementById('resetPwSaveBtn');
+      btn.disabled = true;
+      btn.textContent = 'Saving…';
+
+      try {
+        const r = await fetch(`/api/admin/users/${resetUserId}/reset-password`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          credentials: 'include',
+          body: JSON.stringify({ new_password })
+        });
+        const data = await r.json();
+        if (!r.ok) { errEl.textContent = data.error || 'Failed to reset password.'; return; }
+        closeResetPwModal();
+        showToast('Password reset successfully.', 'success');
+      } catch (e) {
+        errEl.textContent = 'Connection error.';
+      } finally {
+        btn.disabled = false;
+        btn.textContent = 'Save';
+      }
+    });
+
+    // ── Change Role Modal ─────────────────────────────────────
+    let changeRoleUserId = null;
+
+    function openChangeRoleModal(user) {
+      changeRoleUserId = user.id;
+      document.getElementById('changeRoleTitle').textContent = `Change Role — ${user.full_name}`;
+      document.getElementById('changeRoleCurrentBadge').innerHTML = roleBadge(user.role);
+      document.getElementById('changeRoleSelect').value = user.role;
+      document.getElementById('changeRoleAdminWarning').style.display = user.role === 'admin' ? 'block' : 'none';
+      document.getElementById('changeRoleError').textContent = '';
+      document.getElementById('changeRoleModal').classList.add('open');
+    }
+
+    function closeChangeRoleModal() {
+      document.getElementById('changeRoleModal').classList.remove('open');
+      changeRoleUserId = null;
+    }
+
+    document.getElementById('changeRoleSelect').addEventListener('change', function () {
+      document.getElementById('changeRoleAdminWarning').style.display = this.value === 'admin' ? 'block' : 'none';
+    });
+
+    document.getElementById('changeRoleModalClose').addEventListener('click', closeChangeRoleModal);
+    document.getElementById('changeRoleCancelBtn').addEventListener('click', closeChangeRoleModal);
+    document.getElementById('changeRoleModal').addEventListener('click', (e) => {
+      if (e.target === e.currentTarget) closeChangeRoleModal();
+    });
+
+    document.getElementById('changeRoleSaveBtn').addEventListener('click', async () => {
+      const role = document.getElementById('changeRoleSelect').value;
+      const errEl = document.getElementById('changeRoleError');
+      errEl.textContent = '';
+
+      const btn = document.getElementById('changeRoleSaveBtn');
+      btn.disabled = true;
+      btn.textContent = 'Saving…';
+      try {
+        const r = await fetch(`/api/admin/users/${changeRoleUserId}/change-role`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          credentials: 'include',
+          body: JSON.stringify({ role })
+        });
+        const data = await r.json();
+        if (!r.ok) { errEl.textContent = data.error || 'Failed to change role.'; return; }
+        closeChangeRoleModal();
+        showToast('Role updated successfully.', 'success');
+        await loadUsers();
+      } catch (e) {
+        errEl.textContent = 'Connection error.';
+      } finally {
+        btn.disabled = false;
+        btn.textContent = 'Save';
+      }
+    });
+
+    // ── Assign Category Modal ─────────────────────────────────
+    let assignCategoryUserId = null;
+
+    function openAssignCategoryModal(user) {
+      assignCategoryUserId = user.id;
+      document.getElementById('assignCategoryTitle').textContent = `Assign Category — ${user.full_name}`;
+      let currentCategories = [];
+      try {
+        const raw = user.it_category;
+        if (!raw) {
+          currentCategories = [];
+        } else if (Array.isArray(raw)) {
+          currentCategories = raw;
+        } else if (typeof raw === 'string' && raw.trim() !== '') {
+          currentCategories = JSON.parse(raw);
+        }
+      } catch (e) {
+        currentCategories = [];
+      }
+      document.querySelectorAll('#assignCategoryModal .category-checkboxes input[type="checkbox"]').forEach(cb => {
+        cb.checked = currentCategories.includes(cb.value);
+      });
+      document.getElementById('assignCategoryError').textContent = '';
+      document.getElementById('assignCategoryModal').classList.add('open');
+    }
+
+    function closeAssignCategoryModal() {
+      document.getElementById('assignCategoryModal').classList.remove('open');
+      assignCategoryUserId = null;
+    }
+
+    document.getElementById('assignCategoryModalClose').addEventListener('click', closeAssignCategoryModal);
+    document.getElementById('assignCategoryCancelBtn').addEventListener('click', closeAssignCategoryModal);
+    document.getElementById('assignCategoryModal').addEventListener('click', (e) => {
+      if (e.target === e.currentTarget) closeAssignCategoryModal();
+    });
+
+    document.getElementById('assignCategorySaveBtn').addEventListener('click', async () => {
+      const categories = Array.from(
+        document.querySelectorAll('#assignCategoryModal .category-checkboxes input[type="checkbox"]:checked')
+      ).map(cb => cb.value);
+      const errEl = document.getElementById('assignCategoryError');
+      errEl.textContent = '';
+      const btn = document.getElementById('assignCategorySaveBtn');
+      btn.disabled = true;
+      btn.textContent = 'Saving…';
+      try {
+        const r = await fetch(`/api/admin/users/${assignCategoryUserId}/assign-category`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          credentials: 'include',
+          body: JSON.stringify({ categories })
+        });
+        const data = await r.json();
+        if (!r.ok) { errEl.textContent = data.error || 'Failed to assign category.'; return; }
+        closeAssignCategoryModal();
+        showToast('Category assigned successfully.', 'success');
+        await loadUsers();
+      } catch (e) {
+        errEl.textContent = 'Connection error.';
+      } finally {
+        btn.disabled = false;
+        btn.textContent = 'Save';
+      }
+    });
+
+    // ── Logout ────────────────────────────────────────────────
+    // ── Logs Tab ─────────────────────────────────────────────
+    function escHtmlLog(s) {
+      return String(s || '').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
+    }
+
+    function statusBadgeLog(status) {
+      if (!status) return '—';
+      const s = status.toUpperCase();
+      if (s === 'SUCCESS' || s === 'sent') return `<span class="log-badge-success">${escHtmlLog(status)}</span>`;
+      if (s === 'FAILED' || s === 'failed') return `<span class="log-badge-failed">${escHtmlLog(status)}</span>`;
+      return `<span class="log-badge-warning">${escHtmlLog(status)}</span>`;
+    }
+
+    function httpStatusBadge(code) {
+      const n = parseInt(code);
+      if (n >= 200 && n < 300) return `<span class="log-badge-success">${code}</span>`;
+      if (n >= 400 && n < 500) return `<span class="log-badge-warning">${code}</span>`;
+      if (n >= 500) return `<span class="log-badge-failed">${code}</span>`;
+      return escHtmlLog(code);
+    }
+
+    function renderLogs(entries) {
+      const search = (document.getElementById('logSearch').value || '').toLowerCase();
+      const filtered = search
+        ? entries.filter(e => JSON.stringify(e).toLowerCase().includes(search))
+        : entries;
+
+      const head = document.getElementById('logTableHead');
+      const body = document.getElementById('logTableBody');
+
+      if (currentLogType === 'auth') {
+        head.innerHTML = '<tr><th>Timestamp</th><th>Status</th><th>Email</th><th>IP</th></tr>';
+        body.innerHTML = filtered.length === 0
+          ? '<tr><td colspan="4" style="text-align:center;color:#888;padding:20px;">No entries found.</td></tr>'
+          : filtered.map(e => `<tr>
+              <td>${escHtmlLog(e.timestamp)}</td>
+              <td>${statusBadgeLog(e.status)}</td>
+              <td>${escHtmlLog(e.email)}</td>
+              <td>${escHtmlLog(e.ip)}</td>
+            </tr>`).join('');
+
+        const statsEl = document.getElementById('authLogStats');
+        statsEl.style.display = 'flex';
+        document.getElementById('statSuccess').textContent = entries.filter(e => e.status === 'SUCCESS').length;
+        document.getElementById('statFailed').textContent = entries.filter(e => e.status === 'FAILED').length;
+        const uniqueIPs = new Set(entries.map(e => e.ip).filter(Boolean));
+        document.getElementById('statUnique').textContent = uniqueIPs.size;
+
+      } else if (currentLogType === 'tickets') {
+        document.getElementById('authLogStats').style.display = 'none';
+        head.innerHTML = '<tr><th>Timestamp</th><th>Ticket #</th><th>User</th><th>Action</th></tr>';
+        body.innerHTML = filtered.length === 0
+          ? '<tr><td colspan="4" style="text-align:center;color:#888;padding:20px;">No entries found.</td></tr>'
+          : filtered.map(e => `<tr>
+              <td>${escHtmlLog(e.created_at)}</td>
+              <td>${escHtmlLog(e.ticket_number)}</td>
+              <td>${escHtmlLog(e.user_name)}</td>
+              <td>${escHtmlLog(e.message)}</td>
+            </tr>`).join('');
+
+      } else if (currentLogType === 'email') {
+        document.getElementById('authLogStats').style.display = 'none';
+        head.innerHTML = '<tr><th>Timestamp</th><th>Status</th><th>Recipient</th><th>Subject</th></tr>';
+        body.innerHTML = filtered.length === 0
+          ? '<tr><td colspan="4" style="text-align:center;color:#888;padding:20px;">No entries found.</td></tr>'
+          : filtered.map(line => {
+              const m = String(line).match(/^\[(.+?)\]\s+(SENT|FAILED)\s+\|\s+To:\s+(.+?)\s+\|\s+Subject:\s+(.+?)(\s+\|\s+Error:.*)?$/);
+              if (m) return `<tr>
+                <td>${escHtmlLog(m[1])}</td>
+                <td>${statusBadgeLog(m[2])}</td>
+                <td>${escHtmlLog(m[3])}</td>
+                <td>${escHtmlLog(m[4])}${m[5] ? ' <span style="color:#c0392b;font-size:0.75rem;">' + escHtmlLog(m[5]) + '</span>' : ''}</td>
+              </tr>`;
+              return `<tr><td colspan="4">${escHtmlLog(line)}</td></tr>`;
+            }).join('');
+
+      } else if (currentLogType === 'access') {
+        document.getElementById('authLogStats').style.display = 'none';
+        head.innerHTML = '<tr><th>Timestamp</th><th>IP</th><th>Method</th><th>Route</th><th>Status</th></tr>';
+        body.innerHTML = filtered.length === 0
+          ? '<tr><td colspan="5" style="text-align:center;color:#888;padding:20px;">No entries found.</td></tr>'
+          : filtered.map(line => {
+              // Apache combined format: IP - - [timestamp] "METHOD /path HTTP/1.1" STATUS ...
+              const m = String(line).match(/^(\S+)\s+\S+\s+\S+\s+\[(.+?)\]\s+"(\S+)\s+(\S+)[^"]*"\s+(\d+)/);
+              if (m) return `<tr>
+                <td>${escHtmlLog(m[2])}</td>
+                <td>${escHtmlLog(m[1])}</td>
+                <td>${escHtmlLog(m[3])}</td>
+                <td>${escHtmlLog(m[4])}</td>
+                <td>${httpStatusBadge(m[5])}</td>
+              </tr>`;
+              return `<tr><td colspan="5">${escHtmlLog(line)}</td></tr>`;
+            }).join('');
+      }
+    }
+
+    async function loadLogs(type) {
+      currentLogType = type;
+      logsLoaded = true;
+      const body = document.getElementById('logTableBody');
+      const head = document.getElementById('logTableHead');
+      body.innerHTML = '<tr><td colspan="5" style="text-align:center;padding:20px;color:#888;">Loading…</td></tr>';
+      head.innerHTML = '';
+      try {
+        const r = await fetch(`/api/admin/logs/${type}`, { credentials: 'include' });
+        const data = await r.json();
+        allLogEntries = data.logs || [];
+        renderLogs(allLogEntries);
+      } catch (e) {
+        body.innerHTML = '<tr><td colspan="5" style="text-align:center;padding:20px;color:#c0392b;">Failed to load logs.</td></tr>';
+      }
+    }
+
+    // Log type button switching
+    document.querySelectorAll('.log-type-btn').forEach(btn => {
+      btn.addEventListener('click', () => {
+        document.querySelectorAll('.log-type-btn').forEach(b => b.classList.remove('active'));
+        btn.classList.add('active');
+        document.getElementById('logSearch').value = '';
+        loadLogs(btn.dataset.log);
+      });
+    });
+
+    // Search input
+    document.getElementById('logSearch').addEventListener('input', () => renderLogs(allLogEntries));
+
+    // Refresh button
+    document.getElementById('refreshLogsBtn').addEventListener('click', () => loadLogs(currentLogType));
+
+    // ── IT Submit Ticket Modal ────────────────────────────────
+    function openItTicketModal() {
+      document.getElementById('itTicketTitle').value = '';
+      document.getElementById('itTicketCategory').value = '';
+      document.getElementById('itTicketPriority').value = 'Medium';
+      document.getElementById('itTicketDescription').value = '';
+      document.getElementById('itCcEmail1').value = '';
+      document.getElementById('itCcEmail2').value = '';
+      document.getElementById('itTicketAttachments').value = '';
+      document.getElementById('itTicketMsg').textContent = '';
+      document.getElementById('itNewTicketModal').classList.add('open');
+    }
+
+    function closeItTicketModal() {
+      document.getElementById('itNewTicketModal').classList.remove('open');
+    }
+
+    document.getElementById('itSubmitTicketBtn').addEventListener('click', openItTicketModal);
+    document.getElementById('closeItTicketModal').addEventListener('click', closeItTicketModal);
+    document.getElementById('closeItTicketModal2').addEventListener('click', closeItTicketModal);
+    document.getElementById('itNewTicketModal').addEventListener('click', (e) => {
+      if (e.target === e.currentTarget) closeItTicketModal();
+    });
+
+    document.getElementById('itSubmitTicketConfirm').addEventListener('click', async () => {
+      const title = document.getElementById('itTicketTitle').value.trim();
+      const category = document.getElementById('itTicketCategory').value;
+      const priority = document.getElementById('itTicketPriority').value;
+      const description = document.getElementById('itTicketDescription').value.trim();
+      const msgEl = document.getElementById('itTicketMsg');
+      msgEl.textContent = '';
+      msgEl.style.color = '#b91c1c';
+
+      if (!title || !category || !description) {
+        msgEl.textContent = 'Please fill in all required fields (Title, Category, Description).';
+        return;
+      }
+
+      const btn = document.getElementById('itSubmitTicketConfirm');
+      btn.disabled = true;
+      btn.textContent = 'Submitting…';
+
+      try {
+        const formData = new FormData();
+        formData.append('title', title);
+        formData.append('category', category);
+        formData.append('priority', priority);
+        formData.append('description', description);
+        formData.append('cc_email1', document.getElementById('itCcEmail1').value);
+        formData.append('cc_email2', document.getElementById('itCcEmail2').value);
+        const files = document.getElementById('itTicketAttachments').files;
+        if (files) Array.from(files).forEach(f => formData.append('attachments', f));
+
+        const r = await fetch('/api/tickets/submit', {
+          method: 'POST',
+          credentials: 'include',
+          body: formData
+        });
+        const data = await r.json();
+        if (!r.ok) {
+          msgEl.textContent = data.error || 'Failed to submit ticket.';
+          return;
+        }
+        closeItTicketModal();
+        showToast(`Ticket ${data.ticket.ticket_number} submitted successfully!`, 'success');
+        loadAllTickets();
+      } catch (err) {
+        msgEl.textContent = 'Connection error. Please try again.';
+      } finally {
+        btn.disabled = false;
+        btn.textContent = 'Submit Ticket';
+      }
+    });
+
+    document.getElementById('logoutBtn').addEventListener('click', () => {
+      fetch('/api/auth/logout', { method: 'POST', credentials: 'include' })
+        .finally(() => { window.location.href = '/index.html'; });
+    });
+
+    // ── Keyboard: Escape closes any open modal ────────────────
+    document.addEventListener('keydown', (e) => {
+      if (e.key !== 'Escape') return;
+      if (document.getElementById('itNewTicketModal').classList.contains('open')) closeItTicketModal();
+      else if (document.getElementById('ticketModal').classList.contains('open')) closeTicketModal();
+      else if (document.getElementById('editUserModal').classList.contains('open')) closeEditModal();
+      else if (document.getElementById('resetPwModal').classList.contains('open')) closeResetPwModal();
+      else if (document.getElementById('changeRoleModal').classList.contains('open')) closeChangeRoleModal();
+      else if (document.getElementById('assignCategoryModal').classList.contains('open')) closeAssignCategoryModal();
+    });
+
+    init();
+  })();
+  </script>
+
+</div>
+  <footer class="site-footer">
+    <div class="footer-content">
+      <span>LTUC IT Department</span>
+      <span class="footer-divider">|</span>
+      <span>LTUC IT Ticketing System <strong>v1.5.4</strong></span>
+      <span class="footer-divider">|</span>
+      <span>© 2026 Luminus Technical University College</span>
+    </div>
+  </footer>
+</body>
+</html>
